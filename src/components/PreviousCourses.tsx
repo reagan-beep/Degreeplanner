@@ -20,9 +20,10 @@ interface TransferCourse {
 interface PreviousCoursesProps {
   major: string;
   onBack: (toHome?: boolean) => void;
+  completedCourses?: TransferCourse[];
 }
 
-function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
+function PreviousCourses({ major, onBack, completedCourses = [] }: PreviousCoursesProps) {
   const [tamuCourses, setTamuCourses] = useState<Course[]>([]);
   const [transferCourses, setTransferCourses] = useState<TransferCourse[]>([]);
   const [newTamuCourse, setNewTamuCourse] = useState({ code: '' });
@@ -59,26 +60,42 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 relative">
-      {/* Logo in top left corner */}
-      <div className="absolute top-6 left-6 z-10">
-        <button 
-          onClick={() => onBack(true)}
-          className="text-3xl tracking-tight text-[rgba(85,0,0,0.98)] font-[Passion_One] font-bold italic hover:opacity-80 transition-opacity"
-        >
-          How-De-gree
-        </button>
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-5xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+          <h1 className="text-4xl tracking-tight text-[rgba(85,0,0,0.98)] font-[Passion_One] font-bold italic">
             Previous Courses
           </h1>
           <p className="text-muted-foreground">For {major}</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* Completed Courses from Degree Planner */}
+          {completedCourses.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Completed Courses (from Degree Planner)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {completedCourses.map((course, index) => (
+                  <div
+                    key={`completed-${index}`}
+                    className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600">✓</span>
+                        <span className="font-medium text-green-800">{course.code}</span>
+                        <span className="text-xs text-green-600">•</span>
+                        <span className="text-sm text-green-700">{course.hours} credit hours</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* TAMU Courses Section */}
           <Card>
             <CardHeader>
@@ -194,15 +211,6 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button onClick={() => onBack()} variant="outline" size="lg" className="font-[Open_Sans]">
-            Back to Options
-          </Button>
-          <Button onClick={() => onBack(true)} variant="outline" size="lg" className="font-[Open_Sans]">
-            Back to Home
-          </Button>
         </div>
       </div>
     </div>

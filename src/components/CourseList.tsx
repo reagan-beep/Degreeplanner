@@ -3,8 +3,9 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, Search, ExternalLink } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 interface Course {
   code: string;
@@ -108,6 +109,13 @@ function CourseList({ major, onBack }: CourseListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
 
+  // Helper function to generate anex.us URL for a course
+  const getAnexUrl = (courseCode: string) => {
+    // Convert course code to anex.us format (e.g., "CSCE 121" -> "CSCE-121")
+    const formattedCode = courseCode.replace(/\s+/g, '-');
+    return `https://anex.us/grades/?dept=${formattedCode.split('-')[0]}&number=${formattedCode.split('-')[1]}`;
+  };
+
   const filteredCourses = mockCourses.filter((course) => {
     const matchesSearch =
       course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -120,30 +128,13 @@ function CourseList({ major, onBack }: CourseListProps) {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 relative">
-      {/* Logo in top left corner */}
-      <div className="absolute top-6 left-6 z-10">
-        <button 
-          onClick={() => onBack(true)}
-          className="text-3xl tracking-tight text-[rgba(85,0,0,0.98)] font-[Passion_One] font-bold italic hover:opacity-80 transition-opacity"
-        >
-          How-De-gree
-        </button>
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => onBack()} className="font-[Open_Sans]">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <div className="text-center flex-1">
-            <h1 className="text-4xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-              Course Catalog
-            </h1>
-            <p className="text-muted-foreground">{major}</p>
-          </div>
-          <div className="w-24"></div>
+        <div className="text-center">
+          <h1 className="text-4xl tracking-tight text-[rgba(85,0,0,0.98)] font-[Passion_One] font-bold italic">
+            Course Catalog
+          </h1>
+          <p className="text-muted-foreground">{major}</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 space-y-4">
@@ -175,31 +166,59 @@ function CourseList({ major, onBack }: CourseListProps) {
         </div>
 
         <div className="grid gap-4">
-          {filteredCourses.map((course) => (
-            <Card key={course.code}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2">
-                      {course.code}
-                      <Badge variant={course.category === 'Core' ? 'default' : 'secondary'}>
-                        {course.category}
-                      </Badge>
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">{course.name}</p>
+          <TooltipProvider>
+            {filteredCourses.map((course) => (
+              <Tooltip key={course.code} delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <CardTitle className="flex items-center gap-2">
+                            {course.code}
+                            <Badge variant={course.category === 'Core' ? 'default' : 'secondary'}>
+                              {course.category}
+                            </Badge>
+                            <a 
+                              href={getAnexUrl(course.code)} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="ml-2 text-blue-600 hover:text-blue-800"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </CardTitle>
+                          <p className="text-sm text-muted-foreground">{course.name}</p>
+                        </div>
+                        <Badge variant="outline">{course.hours} hours</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <p className="text-sm">{course.description}</p>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">Prerequisites:</span>
+                        <span>{course.prerequisites}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="w-96 h-64 p-1">
+                  <div className="w-full h-full">
+                    <div className="text-sm font-medium mb-2 p-2">
+                      Grade Distribution for {course.code}
+                    </div>
+                    <iframe
+                      src={getAnexUrl(course.code)}
+                      className="w-full h-48 border-0 rounded"
+                      title={`Grade distribution for ${course.code}`}
+                      sandbox="allow-scripts allow-same-origin"
+                    />
                   </div>
-                  <Badge variant="outline">{course.hours} hours</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm">{course.description}</p>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Prerequisites:</span>
-                  <span>{course.prerequisites}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </TooltipProvider>
         </div>
 
         {filteredCourses.length === 0 && (
