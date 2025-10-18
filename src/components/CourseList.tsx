@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -107,8 +107,39 @@ const mockCourses: Course[] = [
 function CourseList({ major, onBack }: CourseListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredCourses = mockCourses.filter((course) => {
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch courses from anex.us API
+        const response = await fetch('https://anex.us/api/courses');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setCourses(data);
+      } catch (err) {
+        console.error('Failed to fetch courses:', err);
+        setError('Failed to load courses. Using fallback data.');
+        
+        // Fallback to mock data if API fails
+        setCourses(mockCourses);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, [major]);
+
+  const filteredCourses = courses.filter((course) => {
     const matchesSearch =
       course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -132,18 +163,11 @@ function CourseList({ major, onBack }: CourseListProps) {
       </div>
 
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => onBack()} className="font-[Open_Sans]">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <div className="text-center flex-1">
-            <h1 className="text-4xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-              Course Catalog
-            </h1>
-            <p className="text-muted-foreground">{major}</p>
-          </div>
-          <div className="w-24"></div>
+        <div className="text-center">
+          <h1 className="text-4xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+            Course Catalog
+          </h1>
+          <p className="text-muted-foreground">For {major}</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 space-y-4">
@@ -174,13 +198,25 @@ function CourseList({ major, onBack }: CourseListProps) {
           </p>
         </div>
 
+        {loading && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Loading courses...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-yellow-800">{error}</p>
+          </div>
+        )}
+
         <div className="grid gap-4">
-          {filteredCourses.map((course) => (
+          {!loading && filteredCourses.map((course) => (
             <Card key={course.code}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-[#800000] font-[Passion_One]">
                       {course.code}
                       <Badge variant={course.category === 'Core' ? 'default' : 'secondary'}>
                         {course.category}

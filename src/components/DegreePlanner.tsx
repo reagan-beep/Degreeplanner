@@ -11,6 +11,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Slider } from './ui/slider';
+import { Checkbox } from './ui/checkbox';
 
 interface Course {
   code: string;
@@ -69,12 +70,115 @@ const initialSemesters: Semester[] = [
       { id: '13', code: 'CSCE 315', name: 'Software Engineering', hours: 3 },
     ],
   },
+  {
+    id: 'fall-3',
+    name: 'Fall Year 3',
+    courses: [
+      { id: '14', code: 'CSCE 411', name: 'Design & Analysis of Algorithms', hours: 3 },
+      { id: '15', code: 'CSCE 431', name: 'Software Engineering', hours: 3 },
+      { id: '16', code: 'STAT 211', name: 'Principles of Statistics', hours: 3 },
+      { id: '17', code: 'COMM 203', name: 'Public Speaking', hours: 3 },
+    ],
+  },
+  {
+    id: 'spring-3',
+    name: 'Spring Year 3',
+    courses: [
+      { id: '18', code: 'CSCE 410', name: 'Operating Systems', hours: 3 },
+      { id: '19', code: 'CSCE 420', name: 'Artificial Intelligence', hours: 3 },
+      { id: '20', code: 'CSCE 482', name: 'Senior Capstone Design', hours: 3 },
+      { id: '21', code: 'PHIL 240', name: 'Intro to Ethics', hours: 3 },
+    ],
+  },
+  {
+    id: 'fall-4',
+    name: 'Fall Year 4',
+    courses: [
+      { id: '22', code: 'CSCE 435', name: 'Parallel Computing', hours: 3 },
+      { id: '23', code: 'CSCE 470', name: 'Information Storage & Retrieval', hours: 3 },
+      { id: '24', code: 'CSCE 489', name: 'Special Topics', hours: 3 },
+      { id: '25', code: 'POLS 206', name: 'American National Government', hours: 3 },
+    ],
+  },
+  {
+    id: 'spring-4',
+    name: 'Spring Year 4',
+    courses: [
+      { id: '26', code: 'CSCE 483', name: 'Computer Systems Design', hours: 3 },
+      { id: '27', code: 'CSCE 491', name: 'Research', hours: 3 },
+      { id: '28', code: 'ARTS 125', name: 'Visual Arts Appreciation', hours: 3 },
+      { id: '29', code: 'PSYC 107', name: 'General Psychology', hours: 3 },
+    ],
+  },
 ];
 
 function DegreePlanner({ major, onBack }: DegreePlannerProps) {
   const [semesters, setSemesters] = useState<Semester[]>(initialSemesters);
   const [maxHours, setMaxHours] = useState([16]);
   const [currentYear, setCurrentYear] = useState("Freshman");
+  const [manuallyCompletedCourses, setManuallyCompletedCourses] = useState<Set<string>>(new Set());
+
+  // Determine which semesters are completed based on current year
+  const getCompletedSemesterIds = () => {
+    switch (currentYear) {
+      case "Freshman":
+        return []; // No completed semesters
+      case "Sophomore":
+        return ['fall-1', 'spring-1']; // Year 1 completed
+      case "Junior":
+        return ['fall-1', 'spring-1', 'fall-2', 'spring-2']; // Years 1-2 completed
+      case "Senior":
+        return ['fall-1', 'spring-1', 'fall-2', 'spring-2', 'fall-3', 'spring-3']; // Years 1-3 completed
+      case "Graduate":
+        return ['fall-1', 'spring-1', 'fall-2', 'spring-2', 'fall-3', 'spring-3', 'fall-4', 'spring-4']; // All years completed
+      default:
+        return [];
+    }
+  };
+
+  const completedSemesterIds = getCompletedSemesterIds();
+
+  // Separate completed and incomplete courses considering both semester completion and manual completion
+  const getAllCompletedCourses = () => {
+    const completedSemesters: Semester[] = [];
+    
+    semesters.forEach(semester => {
+      const isCompletedSemester = completedSemesterIds.includes(semester.id);
+      const completedCoursesInSemester = semester.courses.filter(course => 
+        isCompletedSemester || manuallyCompletedCourses.has(course.id)
+      );
+      
+      if (completedCoursesInSemester.length > 0) {
+        completedSemesters.push({
+          ...semester,
+          courses: completedCoursesInSemester
+        });
+      }
+    });
+    
+    return completedSemesters;
+  };
+
+  const getAllIncompleteCourses = () => {
+    const incompleteCourses: { course: Course; semesterName: string; semesterId: string }[] = [];
+    
+    semesters.forEach(semester => {
+      const isCompletedSemester = completedSemesterIds.includes(semester.id);
+      
+      if (!isCompletedSemester) {
+        semester.courses.forEach(course => {
+          if (!manuallyCompletedCourses.has(course.id)) {
+            incompleteCourses.push({ course, semesterName: semester.name, semesterId: semester.id });
+          }
+        });
+      }
+    });
+    
+    return incompleteCourses;
+  };
+
+  const completedCourses = getAllCompletedCourses();
+  const incompleteCourses = getAllIncompleteCourses();
 
   const getTotalHours = (courses: Course[]) => {
     return courses.reduce((sum, course) => sum + course.hours, 0);
@@ -82,6 +186,29 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
 
   const getTotalCredits = () => {
     return semesters.reduce((sum, semester) => sum + getTotalHours(semester.courses), 0);
+  };
+
+  const getCompletedCredits = () => {
+    const previousCoursesCredits = completedCourses.reduce((sum, semester) => sum + getTotalHours(semester.courses), 0);
+    
+    // Add credits from manually completed courses that are still in the planner
+    const manuallyCompletedCredits = semesters.reduce((sum, semester) => {
+      return sum + semester.courses
+        .filter(course => manuallyCompletedCourses.has(course.id))
+        .reduce((courseSum, course) => courseSum + course.hours, 0);
+    }, 0);
+    
+    return previousCoursesCredits + manuallyCompletedCredits;
+  };
+
+  const toggleCourseCompletion = (courseId: string) => {
+    const newCompletedCourses = new Set(manuallyCompletedCourses);
+    if (newCompletedCourses.has(courseId)) {
+      newCompletedCourses.delete(courseId);
+    } else {
+      newCompletedCourses.add(courseId);
+    }
+    setManuallyCompletedCourses(newCompletedCourses);
   };
 
   const removeCourse = (semesterId: string, courseId: string) => {
@@ -106,18 +233,11 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
       </div>
 
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => onBack(true)} className="font-[Open_Sans]">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Button>
-          <div className="text-center flex-1">
-            <h1 className="text-4xl tracking-tight text-[#800000] font-[Passion_One] font-bold italic">
-              Academic Dashboard
-            </h1>
-            <p className="text-muted-foreground font-[Open_Sans]">{major}</p>
-          </div>
-          <div className="w-24"></div>
+        <div className="text-center">
+          <h1 className="text-4xl tracking-tight text-[#800000] font-[Passion_One] font-bold italic">
+            Academic Dashboard
+          </h1>
+          <p className="text-muted-foreground font-[Open_Sans]">{major}</p>
         </div>
 
         <Tabs defaultValue="planner" className="w-full">
@@ -147,15 +267,15 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
           <TabsContent value="planner" className="space-y-6 mt-6">
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-[Passion_One] text-gray-800">Progress Overview</h2>
+                <h2 className="text-xl font-[Passion_One] text-[#800000]">Progress Overview</h2>
                 <Badge variant="secondary">
-                  {getTotalCredits()} / 120 Credits
+                  {getCompletedCredits()} / 120 Credits
                 </Badge>
               </div>
               <div className="w-full bg-secondary rounded-full h-3">
                 <div 
                   className="bg-gradient-to-r from-blue-600 to-purple-600 h-3 rounded-full transition-all"
-                  style={{ width: `${(getTotalCredits() / 120) * 100}%` }}
+                  style={{ width: `${(getCompletedCredits() / 120) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -165,8 +285,20 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                 <Card key={semester.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="font-[Passion_One]">{semester.name}</CardTitle>
-                      <Badge>{getTotalHours(semester.courses)} hours</Badge>
+                      <CardTitle className="font-[Passion_One] text-[#800000]">{semester.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant={
+                            getTotalHours(semester.courses) >= maxHours[0] 
+                              ? "destructive" 
+                              : getTotalHours(semester.courses) >= maxHours[0] - 2 
+                                ? "secondary" 
+                                : "outline"
+                          }
+                        >
+                          {getTotalHours(semester.courses)} / {maxHours[0]} hours
+                        </Badge>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2">
@@ -175,6 +307,10 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                         key={course.id}
                         className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors group"
                       >
+                        <Checkbox
+                          checked={manuallyCompletedCourses.has(course.id)}
+                          onCheckedChange={() => toggleCourseCompletion(course.id)}
+                        />
                         <GripVertical className="h-4 w-4 text-muted-foreground" />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -202,15 +338,31 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                       variant="outline" 
                       size="sm" 
                       className="w-full mt-2 font-[Open_Sans]"
+                      disabled={getTotalHours(semester.courses) >= maxHours[0]}
                       onClick={() => {
                         console.log('Add course button clicked for semester:', semester.id);
+                        const currentSemesterHours = getTotalHours(semester.courses);
+                        
+                        if (currentSemesterHours >= maxHours[0]) {
+                          alert(`Cannot add course: This semester already has ${currentSemesterHours} hours, which meets or exceeds the maximum of ${maxHours[0]} hours per semester.`);
+                          return;
+                        }
+                        
                         const code = prompt('Enter course code (e.g., CSCE 121):');
                         if (code && code.trim()) {
+                          const hoursInput = prompt('Enter credit hours (default is 3):', '3');
+                          const hours = parseInt(hoursInput || '3');
+                          
+                          if (currentSemesterHours + hours > maxHours[0]) {
+                            alert(`Cannot add course: Adding ${hours} hours would exceed the maximum of ${maxHours[0]} hours per semester. Current: ${currentSemesterHours} hours.`);
+                            return;
+                          }
+                          
                           const course: Course = {
                             id: `course-${Date.now()}`,
                             code: code.trim(),
                             name: '', // Empty name since we're only asking for code
-                            hours: 3 // Default to 3 credit hours
+                            hours: hours
                           };
                           setSemesters(semesters.map(sem => 
                             sem.id === semester.id 
@@ -222,7 +374,10 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                       }}
                     >
                       <Plus className="mr-2 h-4 w-4" />
-                      Add Course
+                      {getTotalHours(semester.courses) >= maxHours[0] 
+                        ? `Semester Full (${maxHours[0]} hrs)` 
+                        : 'Add Course'
+                      }
                     </Button>
                   </CardContent>
                 </Card>
@@ -263,14 +418,20 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
           </TabsContent>
 
           <TabsContent value="previous" className="mt-6">
-            <PreviousCourses major={major} onBack={() => {}} />
+            <PreviousCourses 
+              major={major} 
+              onBack={() => {}} 
+              completedCourses={getAllCompletedCourses()}
+              manuallyCompletedCourses={manuallyCompletedCourses}
+              onToggleCourseCompletion={toggleCourseCompletion}
+            />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-[Passion_One] text-gray-800 mb-4">Academic Settings</h2>
+                  <h2 className="text-2xl font-[Passion_One] text-[#800000] mb-4">Academic Settings</h2>
                 </div>
                 
                 <div className="space-y-4">
@@ -304,6 +465,7 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                         <SelectItem value="Sophomore">Sophomore</SelectItem>
                         <SelectItem value="Junior">Junior</SelectItem>
                         <SelectItem value="Senior">Senior</SelectItem>
+                        <SelectItem value="Graduate">Graduate</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

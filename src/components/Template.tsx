@@ -109,10 +109,6 @@ function Template({ major, onBack }: TemplateProps) {
 
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => onBack()} className="font-[Open_Sans]">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
           <div className="text-center flex-1">
             <h1 className="text-4xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
               Degree Template
@@ -121,7 +117,7 @@ function Template({ major, onBack }: TemplateProps) {
           </div>
           <Button variant="outline" className="font-[Open_Sans]">
             <Download className="mr-2 h-4 w-4" />
-            Export
+            Export PDF
           </Button>
         </div>
 
@@ -129,7 +125,7 @@ function Template({ major, onBack }: TemplateProps) {
           <div className="flex items-center gap-3 mb-4">
             <FileText className="h-5 w-5 text-muted-foreground" />
             <div>
-              <h2>Standard 4-Year Plan</h2>
+              <h2 className="text-[#800000] font-[Passion_One]">Standard 4-Year Plan</h2>
               <p className="text-sm text-muted-foreground">
                 This is a suggested course sequence. Adjust based on your needs and prerequisites.
               </p>
@@ -141,12 +137,12 @@ function Template({ major, onBack }: TemplateProps) {
         <div className="space-y-6">
           {degreeTemplate.map((yearPlan) => (
             <div key={yearPlan.year} className="space-y-4">
-              <h2 className="text-center">{yearPlan.year}</h2>
+              <h2 className="text-center text-[#800000] font-[Passion_One]">{yearPlan.year}</h2>
               <div className="grid md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>Fall Semester</CardTitle>
+                      <CardTitle className="text-[#800000] font-[Passion_One]">Fall Semester</CardTitle>
                       <Badge>{getTotalCredits(yearPlan.fall)} hours</Badge>
                     </div>
                   </CardHeader>
@@ -168,7 +164,7 @@ function Template({ major, onBack }: TemplateProps) {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>Spring Semester</CardTitle>
+                      <CardTitle className="text-[#800000] font-[Passion_One]">Spring Semester</CardTitle>
                       <Badge>{getTotalCredits(yearPlan.spring)} hours</Badge>
                     </div>
                   </CardHeader>
@@ -192,7 +188,7 @@ function Template({ major, onBack }: TemplateProps) {
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="mb-3">Important Notes</h3>
+          <h3 className="mb-3 text-[#800000] font-[Passion_One]">Important Notes</h3>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex gap-2">
               <span>•</span>

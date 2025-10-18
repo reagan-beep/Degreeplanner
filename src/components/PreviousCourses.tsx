@@ -3,12 +3,21 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Checkbox } from './ui/checkbox';
 import { X, Plus } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
 interface Course {
+  id: string;
   code: string;
-  timestamp: number;
+  name: string;
+  hours: number;
+}
+
+interface Semester {
+  id: string;
+  name: string;
+  courses: Course[];
 }
 
 interface TransferCourse {
@@ -20,9 +29,18 @@ interface TransferCourse {
 interface PreviousCoursesProps {
   major: string;
   onBack: (toHome?: boolean) => void;
+  completedCourses?: Semester[];
+  manuallyCompletedCourses?: Set<string>;
+  onToggleCourseCompletion?: (courseId: string) => void;
 }
 
-function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
+function PreviousCourses({ 
+  major, 
+  onBack, 
+  completedCourses = [], 
+  manuallyCompletedCourses = new Set(), 
+  onToggleCourseCompletion 
+}: PreviousCoursesProps) {
   const [tamuCourses, setTamuCourses] = useState<Course[]>([]);
   const [transferCourses, setTransferCourses] = useState<TransferCourse[]>([]);
   const [newTamuCourse, setNewTamuCourse] = useState({ code: '' });
@@ -78,11 +96,46 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
           <p className="text-muted-foreground">For {major}</p>
         </div>
 
+        {/* Completed Courses from Degree Planner */}
+        {completedCourses.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[#800000] font-[Passion_One]">Completed Courses from Degree Planner</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {completedCourses.map((semester) => (
+                  <div key={semester.id} className="space-y-2">
+                    <h3 className="font-semibold text-lg text-[#800000] font-[Passion_One]">{semester.name}</h3>
+                    <div className="grid gap-2">
+                      {semester.courses.map((course) => (
+                        <div key={course.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <Checkbox
+                              checked={manuallyCompletedCourses.has(course.id)}
+                              onCheckedChange={() => onToggleCourseCompletion?.(course.id)}
+                            />
+                            <div>
+                              <span className="font-medium">{course.code}</span>
+                              <span className="text-sm text-muted-foreground ml-2">• {course.name}</span>
+                              <span className="text-sm text-muted-foreground ml-2">• {course.hours} hrs</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid md:grid-cols-2 gap-6">
           {/* TAMU Courses Section */}
           <Card>
             <CardHeader>
-              <CardTitle>TAMU Courses</CardTitle>
+              <CardTitle className="text-[#800000] font-[Passion_One]">TAMU Courses</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <form onSubmit={handleAddTamuCourse} className="space-y-3">
@@ -133,7 +186,7 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
           {/* Transfer Courses Section */}
           <Card>
             <CardHeader>
-              <CardTitle>Transfer Courses</CardTitle>
+              <CardTitle className="text-[#800000] font-[Passion_One]">Transfer Courses</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <form onSubmit={handleAddTransferCourse} className="space-y-3">
@@ -194,15 +247,6 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button onClick={() => onBack()} variant="outline" size="lg" className="font-[Open_Sans]">
-            Back to Options
-          </Button>
-          <Button onClick={() => onBack(true)} variant="outline" size="lg" className="font-[Open_Sans]">
-            Back to Home
-          </Button>
         </div>
       </div>
     </div>
