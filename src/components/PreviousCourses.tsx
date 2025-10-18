@@ -8,13 +8,13 @@ import { toast } from 'sonner@2.0.3';
 
 interface Course {
   code: string;
-  name: string;
-  hours: string;
   timestamp: number;
 }
 
-interface TransferCourse extends Course {
-  institution: string;
+interface TransferCourse {
+  code: string;
+  hours: string;
+  timestamp: number;
 }
 
 interface PreviousCoursesProps {
@@ -25,26 +25,26 @@ interface PreviousCoursesProps {
 function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
   const [tamuCourses, setTamuCourses] = useState<Course[]>([]);
   const [transferCourses, setTransferCourses] = useState<TransferCourse[]>([]);
-  const [newTamuCourse, setNewTamuCourse] = useState({ code: '', name: '', hours: '' });
-  const [newTransferCourse, setNewTransferCourse] = useState({ code: '', name: '', hours: '', institution: '' });
+  const [newTamuCourse, setNewTamuCourse] = useState({ code: '' });
+  const [newTransferCourse, setNewTransferCourse] = useState({ code: '', hours: '' });
 
   const handleAddTamuCourse = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newTamuCourse.code && newTamuCourse.name && newTamuCourse.hours) {
+    if (newTamuCourse.code.trim()) {
       const timestamp = Date.now();
       setTamuCourses([...tamuCourses, { ...newTamuCourse, timestamp }]);
-      setNewTamuCourse({ code: '', name: '', hours: '' });
+      setNewTamuCourse({ code: '' });
       toast.success(`Added ${newTamuCourse.code} to TAMU courses`);
     }
   };
 
   const handleAddTransferCourse = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newTransferCourse.code && newTransferCourse.name && newTransferCourse.hours && newTransferCourse.institution) {
+    if (newTransferCourse.code.trim() && newTransferCourse.hours.trim()) {
       const timestamp = Date.now();
       setTransferCourses([...transferCourses, { ...newTransferCourse, timestamp }]);
-      setNewTransferCourse({ code: '', name: '', hours: '', institution: '' });
-      toast.success(`Added ${newTransferCourse.code} to transfer credits`);
+      setNewTransferCourse({ code: '', hours: '' });
+      toast.success(`Added ${newTransferCourse.code} to transfer courses`);
     }
   };
 
@@ -59,7 +59,17 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 relative">
+      {/* Logo in top left corner */}
+      <div className="absolute top-6 left-6 z-10">
+        <button 
+          onClick={() => onBack(true)}
+          className="text-3xl tracking-tight text-[rgba(85,0,0,0.98)] font-[Passion_One] font-bold italic hover:opacity-80 transition-opacity"
+        >
+          How-De-gree
+        </button>
+      </div>
+
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-5xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
@@ -82,31 +92,10 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
                     id="tamu-code"
                     placeholder="e.g., CSCE 121"
                     value={newTamuCourse.code}
-                    onChange={(e) => setNewTamuCourse({ ...newTamuCourse, code: e.target.value })}
+                    onChange={(e) => setNewTamuCourse({ code: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tamu-name">Course Name</Label>
-                  <Input
-                    id="tamu-name"
-                    placeholder="e.g., Programming Design"
-                    value={newTamuCourse.name}
-                    onChange={(e) => setNewTamuCourse({ ...newTamuCourse, name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tamu-hours">Credit Hours</Label>
-                  <Input
-                    id="tamu-hours"
-                    type="number"
-                    placeholder="e.g., 3"
-                    min="1"
-                    max="5"
-                    value={newTamuCourse.hours}
-                    onChange={(e) => setNewTamuCourse({ ...newTamuCourse, hours: e.target.value })}
-                  />
-                </div>
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full font-[Open_Sans]">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Course
                 </Button>
@@ -114,7 +103,7 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
 
               <div className="space-y-2 mt-6">
                 {tamuCourses.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">No courses added yet</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No TAMU courses added yet</p>
                 ) : (
                   tamuCourses.map((course, index) => (
                     <div
@@ -124,15 +113,13 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{course.code}</span>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-sm">{course.name}</span>
                         </div>
-                        <span className="text-xs text-muted-foreground">{course.hours} credit hours</span>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveTamuCourse(index)}
+                        className="font-[Open_Sans]"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -143,10 +130,10 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
             </CardContent>
           </Card>
 
-          {/* Transfer Credits Section */}
+          {/* Transfer Courses Section */}
           <Card>
             <CardHeader>
-              <CardTitle>Transfer Credits</CardTitle>
+              <CardTitle>Transfer Courses</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <form onSubmit={handleAddTransferCourse} className="space-y-3">
@@ -157,24 +144,6 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
                     placeholder="e.g., CS 101"
                     value={newTransferCourse.code}
                     onChange={(e) => setNewTransferCourse({ ...newTransferCourse, code: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="transfer-name">Course Name</Label>
-                  <Input
-                    id="transfer-name"
-                    placeholder="e.g., Intro to Programming"
-                    value={newTransferCourse.name}
-                    onChange={(e) => setNewTransferCourse({ ...newTransferCourse, name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="transfer-institution">Institution</Label>
-                  <Input
-                    id="transfer-institution"
-                    placeholder="e.g., Community College"
-                    value={newTransferCourse.institution}
-                    onChange={(e) => setNewTransferCourse({ ...newTransferCourse, institution: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -189,7 +158,7 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
                     onChange={(e) => setNewTransferCourse({ ...newTransferCourse, hours: e.target.value })}
                   />
                 </div>
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full font-[Open_Sans]">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Course
                 </Button>
@@ -197,7 +166,7 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
 
               <div className="space-y-2 mt-6">
                 {transferCourses.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">No transfer credits added yet</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">No transfer courses added yet</p>
                 ) : (
                   transferCourses.map((course, index) => (
                     <div
@@ -208,18 +177,14 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{course.code}</span>
                           <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-sm">{course.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{course.institution}</span>
-                          <span>•</span>
-                          <span>{course.hours} credit hours</span>
+                          <span className="text-sm">{course.hours} credit hours</span>
                         </div>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveTransferCourse(index)}
+                        className="font-[Open_Sans]"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -232,10 +197,10 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button onClick={() => onBack()} variant="outline" size="lg">
+          <Button onClick={() => onBack()} variant="outline" size="lg" className="font-[Open_Sans]">
             Back to Options
           </Button>
-          <Button onClick={() => onBack(true)} variant="outline" size="lg">
+          <Button onClick={() => onBack(true)} variant="outline" size="lg" className="font-[Open_Sans]">
             Back to Home
           </Button>
         </div>

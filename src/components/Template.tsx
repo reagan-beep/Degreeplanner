@@ -96,10 +96,20 @@ function Template({ major, onBack }: TemplateProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 relative">
+      {/* Logo in top left corner */}
+      <div className="absolute top-6 left-6 z-10">
+        <button 
+          onClick={() => onBack(true)}
+          className="text-3xl tracking-tight text-[rgba(85,0,0,0.98)] font-[Passion_One] font-bold italic hover:opacity-80 transition-opacity"
+        >
+          How-De-gree
+        </button>
+      </div>
+
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => onBack()}>
+          <Button variant="ghost" onClick={() => onBack()} className="font-[Open_Sans]">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -109,7 +119,7 @@ function Template({ major, onBack }: TemplateProps) {
             </h1>
             <p className="text-muted-foreground">{major}</p>
           </div>
-          <Button variant="outline">
+          <Button variant="outline" className="font-[Open_Sans]">
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
