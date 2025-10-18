@@ -1,0 +1,86 @@
+{
+  "Math Minor": [
+    {
+      "course": "MATH 148",
+      "alternatives": [
+        {
+          "course": "MATH 148",
+          "name": "Calculus II for Biological Sciences",
+          "credits": 3,
+          "prereqs": "MATH 147, MATH 151 or approval of instructor"
+        },
+        {
+          "course": "MATH 152",
+          "name": "Engineering Mathematics II",
+          "credits": 3,
+          "prereqs": "Grade of C or better in MATH 151 or equivalents"
+        },
+        {
+          "course": "MATH 172",
+          "name": "Calculus II",
+          "credits": 3,
+          "prereqs": "Grade of C or better in MATH 147, MATH 151 or MATH 171 or equivalent"
+        }
+      ],
+      "name": [
+        "Calculus II for Biological Sciences",
+        "Engineering Mathematics II",
+        "Calculus II"
+      ],
+      "credits": 3,
+      "prereqs": "MATH 147, MATH 151 or approval of instructor",
+      "semester": "",
+      "difficulty": 3,
+      "selection_requirement": "Select one from the following",
+      "note": "Must select 3 credit hours from the listed alternatives"
+    },
+    {
+      "course": "MATH 221",
+      "alternatives": [
+        {
+          "course": "MATH 221",
+          "name": "Several Variable Calculus",
+          "credits": 3,
+          "prereqs": "Grade of C or better in MATH 148, MATH 152, or MATH 172, or equivalent"
+        },
+        {
+          "course": "MATH 251",
+          "name": "Engineering Mathematics III",
+          "credits": 3,
+          "prereqs": "MATH 148, MATH 152, or MATH 172s"
+        },
+        {
+          "course": "MATH 253",
+          "name": "Engineering Mathematics III",
+          "credits": 3,
+          "prereqs": "MATH 148, MATH 152, or MATH 172"
+        },
+        {
+          "course": "MATH 300-499",
+          "name": "Upper-level Mathematics Courses",
+          "credits": 3,
+          "prereqs": "See individual course listings"
+        },
+        {
+          "course": "MATH 400-499",
+          "name": "Advanced Mathematics Courses",
+          "credits": 3,
+          "prereqs": "See individual course listings"
+        }
+      ],
+      "name": [
+        "Several Variable Calculus",
+        "Engineering Mathematics III",
+        "Engineering Mathematics III",
+        "Upper-level Mathematics Courses",
+        "Advanced Mathematics Courses"
+      ],
+      "credits": 9,
+      "prereqs": "Grade of C or better in MATH 148, MATH 152, or MATH 172, or equivalent",
+      "semester": "",
+      "difficulty": 3,
+      "selection_requirement": "Select 9 credit hours from the following",
+      "note": "Must select 9 credit hours from the listed alternatives"
+    }
+  ]
+}
