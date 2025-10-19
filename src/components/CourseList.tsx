@@ -61,7 +61,7 @@ const convertMathMinorToCourses = (): Course[] => {
       // Use the first alternative as the main course
       const mainCourse = course.alternatives[0];
       courseCode = mainCourse.course;
-      courseName = mainCourse.name;
+      courseName = Array.isArray(mainCourse.name) ? mainCourse.name[0] : mainCourse.name;
     }
 
     return {

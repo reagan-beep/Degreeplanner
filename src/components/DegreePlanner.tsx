@@ -12,6 +12,7 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Slider } from './ui/slider';
 import cpenData from '../data/ce_courses.json';
+import CourseAnalyzer from '../services/CourseAnalyzer';
 
 interface Course {
   code: string;
@@ -119,6 +120,7 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     const saved = localStorage.getItem('checkedCourses');
     return saved ? new Set(JSON.parse(saved)) : new Set();
   });
+  const [testResults, setTestResults] = useState<string>("");
 
   const getTotalHours = (courses: Course[]) => {
     return courses.reduce((sum, course) => sum + course.hours, 0);
@@ -161,6 +163,44 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
       return `${semesterName} (Current Semester)`;
     }
     return semesterName;
+  };
+
+  // Fill semesters with courses based on completed courses
+  const fillSemesters = () => {
+    try {
+      // Convert completed courses to the format expected by CourseAnalyzer
+      const completedCoursesForAnalyzer = completedCourses.map(course => ({
+        code: course,
+        credits: 3 // Default credits, could be improved
+      }));
+      
+      // Get semester filling results
+      const semesterResults = CourseAnalyzer.fillSemestersWithCourses(
+        completedCoursesForAnalyzer, 
+        maxHours[0]
+      );
+      
+      // Convert results to our semester format
+      const newSemesters: Semester[] = semesterResults.map(result => ({
+        id: result.semester.toLowerCase().replace(/\s+/g, '-'),
+        name: result.semester.replace('First', 'Year 1').replace('Second', 'Year 2').replace('Third', 'Year 3').replace('Fourth', 'Year 4'),
+        courses: result.courses.map(course => ({
+          id: `course-${Date.now()}-${Math.random()}`,
+          code: course.course,
+          name: course.name,
+          hours: course.credits
+        }))
+      }));
+      
+      // Update semesters
+      setSemesters(newSemesters);
+      
+      // Show success message
+      setTestResults(`✅ Filled ${newSemesters.length} semesters with courses! Check the Degree Planner tab to see the results.`);
+      
+    } catch (error) {
+      setTestResults(`Error filling semesters: ${error}`);
+    }
   };
 
   return (
@@ -214,29 +254,49 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
             </TabsTrigger>
           </TabsList>
 
-          {/* Semester Selection Dropdown */}
+           {/* Semester Selection Dropdown */}
+           <div className="mt-4 flex justify-center">
+             <div className="bg-white rounded-lg shadow-sm border p-4">
+               <Label className="font-[Open_Sans] text-sm font-medium mb-2 block">
+                 Select Current Semester:
+               </Label>
+               <Select value={currentSemester} onValueChange={setCurrentSemester}>
+                 <SelectTrigger className="w-64">
+                   <SelectValue placeholder="Select semester" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value="Fall Year 1">Fall Year 1</SelectItem>
+                   <SelectItem value="Spring Year 1">Spring Year 1</SelectItem>
+                   <SelectItem value="Fall Year 2">Fall Year 2</SelectItem>
+                   <SelectItem value="Spring Year 2">Spring Year 2</SelectItem>
+                   <SelectItem value="Fall Year 3">Fall Year 3</SelectItem>
+                   <SelectItem value="Spring Year 3">Spring Year 3</SelectItem>
+                   <SelectItem value="Fall Year 4">Fall Year 4</SelectItem>
+                   <SelectItem value="Spring Year 4">Spring Year 4</SelectItem>
+                 </SelectContent>
+               </Select>
+             </div>
+           </div>
+
+          {/* Semester Filling Button */}
           <div className="mt-4 flex justify-center">
-            <div className="bg-white rounded-lg shadow-sm border p-4">
-              <Label className="font-[Open_Sans] text-sm font-medium mb-2 block">
-                Select Current Semester:
-              </Label>
-              <Select value={currentSemester} onValueChange={setCurrentSemester}>
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Select semester" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Fall Year 1">Fall Year 1</SelectItem>
-                  <SelectItem value="Spring Year 1">Spring Year 1</SelectItem>
-                  <SelectItem value="Fall Year 2">Fall Year 2</SelectItem>
-                  <SelectItem value="Spring Year 2">Spring Year 2</SelectItem>
-                  <SelectItem value="Fall Year 3">Fall Year 3</SelectItem>
-                  <SelectItem value="Spring Year 3">Spring Year 3</SelectItem>
-                  <SelectItem value="Fall Year 4">Fall Year 4</SelectItem>
-                  <SelectItem value="Spring Year 4">Spring Year 4</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Button 
+              onClick={fillSemesters}
+              className="font-[Open_Sans] bg-blue-600 hover:bg-blue-700"
+            >
+              🎯 Fill Semesters with Courses
+            </Button>
           </div>
+
+           {/* Test Results Display */}
+           {testResults && (
+             <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+               <h3 className="font-semibold text-blue-800 mb-2">Test Results:</h3>
+               <div className="bg-white p-3 rounded border text-sm font-mono whitespace-pre-line text-gray-700">
+                 {testResults}
+               </div>
+             </div>
+           )}
 
           <TabsContent value="planner" className="space-y-6 mt-6">
             <div className="bg-white rounded-lg shadow-lg p-6">
