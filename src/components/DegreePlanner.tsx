@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Checkbox } from './ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { ArrowLeft, GripVertical, Plus, X, Calendar, BookOpen, FileText, History, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, GripVertical, Plus, X, Calendar, BookOpen, FileText, History } from 'lucide-react';
 import CourseList from './CourseList';
 import Template from './Template';
 import PreviousCourses from './PreviousCourses';
@@ -398,10 +398,6 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
               <History className="h-4 w-4" />
               Previous Courses
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4">
-              <SlidersHorizontal className="h-4 w-4" />
-              Settings
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="planner" className="space-y-6 mt-6">
@@ -426,6 +422,28 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                     <SelectItem value="Spring Year 4">Spring Year 4</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            {/* Max Hours Setting */}
+            <div className="flex justify-center">
+              <div className="bg-white rounded-lg shadow-sm border p-4 w-64">
+                <Label className="font-[Open_Sans] text-sm font-medium mb-2 block">
+                  Max Hours per Semester: {maxHours[0]}
+                </Label>
+                <Slider
+                  min={12}
+                  max={20}
+                  step={1}
+                  value={maxHours}
+                  onValueChange={setMaxHours}
+                  className="mt-2"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>12</span>
+                  <span>16</span>
+                  <span>20</span>
+                </div>
               </div>
             </div>
             
@@ -623,58 +641,6 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
               onBack={() => {}} 
               initialTamuCourses={tamuCourses}
             />
-          </TabsContent>
-
-          <TabsContent value="settings" className="mt-6">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-[Passion_One] text-gray-800 mb-4">Academic Settings</h2>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label className="font-[Open_Sans]">
-                      Max Hours per Semester: {maxHours[0]}
-                    </Label>
-                    <Slider
-                      min={12}
-                      max={20}
-                      step={1}
-                      value={maxHours}
-                      onValueChange={setMaxHours}
-                      className="mt-2"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>12</span>
-                      <span>16</span>
-                      <span>20</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="font-[Open_Sans]">Current Year</Label>
-                    <Select value={currentYear} onValueChange={setCurrentYear}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Year" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Freshman">Freshman</SelectItem>
-                        <SelectItem value="Sophomore">Sophomore</SelectItem>
-                        <SelectItem value="Junior">Junior</SelectItem>
-                        <SelectItem value="Senior">Senior</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <p className="text-sm text-muted-foreground font-[Open_Sans]">
-                      These settings will help customize your degree planning experience and course recommendations.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </TabsContent>
         </Tabs>
       </div>
