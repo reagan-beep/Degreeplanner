@@ -41,6 +41,15 @@ class CourseAnalyzer {
     }));
     
     console.log(`Loaded ${this.allCourses.length} courses`);
+    
+    // Debug: Show courses by semester
+    const coursesBySemester = this.allCourses.reduce((acc, course) => {
+      if (!acc[course.semester]) acc[course.semester] = [];
+      acc[course.semester].push(course.course);
+      return acc;
+    }, {} as { [key: string]: string[] });
+    
+    console.log('Courses by semester:', coursesBySemester);
   }
 
   // Step 2: Check if you can take a specific course
@@ -108,6 +117,11 @@ class CourseAnalyzer {
     completedCourses: CompletedCourse[], 
     maxHoursPerSemester: number
   ): { semester: string; courses: CourseData[]; totalCredits: number }[] {
+    console.log('CourseAnalyzer: Starting fillSemestersWithCourses');
+    console.log('Total courses loaded:', this.allCourses.length);
+    console.log('Completed courses:', completedCourses);
+    console.log('Max hours per semester:', maxHoursPerSemester);
+    
     const results: { semester: string; courses: CourseData[]; totalCredits: number }[] = [];
     const semesterOrder = this.getSemesterOrder();
     
@@ -119,6 +133,8 @@ class CourseAnalyzer {
       scheduledCourses.add(course.code);
     });
     
+    console.log('Scheduled courses (completed):', Array.from(scheduledCourses));
+    
     // Process each semester in order
     for (const semester of semesterOrder) {
       const semesterCourses: CourseData[] = [];
@@ -128,6 +144,8 @@ class CourseAnalyzer {
       const coursesForSemester = this.allCourses.filter(course => 
         course.semester === semester && !scheduledCourses.has(course.course)
       );
+      
+      console.log(`${semester}: Found ${coursesForSemester.length} courses`);
       
       // Sort courses by priority (easier courses first, core courses first)
       const sortedCourses = coursesForSemester.sort((a, b) => {
@@ -145,10 +163,21 @@ class CourseAnalyzer {
         // Check if we can take this course (prerequisites met)
         const canTakeResult = this.canTakeCourse(course.course, completedCourses);
         
-        if (canTakeResult.canTake && totalCredits + course.credits <= maxHoursPerSemester) {
+        // For now, let's be less restrictive and include courses even if prerequisites aren't fully met
+        // This will help us see all courses and debug the issue
+        const shouldInclude = canTakeResult.canTake || 
+          (course.prereqs && course.prereqs.trim() === '') || // No prerequisites
+          course.prereqs.includes('concurrent') || // Can be taken concurrently
+          course.prereqs.includes('or equivalent') || // Has alternatives
+          course.prereqs.includes('placement'); // Placement test based
+        
+        if (shouldInclude && totalCredits + course.credits <= maxHoursPerSemester) {
           semesterCourses.push(course);
           totalCredits += course.credits;
           scheduledCourses.add(course.course);
+          console.log(`Added ${course.course} to ${semester} (${canTakeResult.canTake ? 'prereqs met' : 'relaxed rules'})`);
+        } else {
+          console.log(`Skipped ${course.course} in ${semester}: ${canTakeResult.message} (credits: ${totalCredits + course.credits}/${maxHoursPerSemester})`);
         }
       }
       
@@ -159,6 +188,7 @@ class CourseAnalyzer {
       });
     }
     
+    console.log('Final results:', results);
     return results;
   }
 

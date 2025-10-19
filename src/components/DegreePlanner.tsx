@@ -4,10 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Checkbox } from './ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { ArrowLeft, GripVertical, Plus, X, Calendar, BookOpen, FileText, History } from 'lucide-react';
+import { ArrowLeft, Plus, X, Calendar, BookOpen, FileText } from 'lucide-react';
 import CourseList from './CourseList';
 import Template from './Template';
-import PreviousCourses from './PreviousCourses';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -191,6 +190,164 @@ const uccOptions = [
   { code: "THEA 2303", name: "Theatre Appreciation", hours: 3 }
 ];
 
+// Helper functions
+const getSemesterLabel = (semesterName: string, currentSemester: string) => {
+  if (semesterName === currentSemester) {
+    return `${semesterName} (Current Semester)`;
+  }
+  return semesterName;
+};
+
+const getTotalHours = (courses: Course[]) => {
+  return courses.reduce((total, course) => total + course.hours, 0);
+};
+
+// Course Component
+const CourseComponent = ({ course, semesterId, onToggleCompletion, checkedCourses, selectedUccCourses, uccOptions, onUccSelection, onRemoveCourse }: {
+  course: Course;
+  semesterId: string;
+  onToggleCompletion: (courseCode: string) => void;
+  checkedCourses: Set<string>;
+  selectedUccCourses: { [key: string]: string };
+  uccOptions: Array<{code: string, name: string, hours: number}>;
+  onUccSelection: (courseId: string, selectedUccCode: string) => void;
+  onRemoveCourse: (semesterId: string, courseId: string) => void;
+}) => {
+  const courseKey = course.code === "UCC Elective" && selectedUccCourses[course.id] 
+    ? `${course.id}-${selectedUccCourses[course.id]}` 
+    : course.code === "UCC Elective" 
+    ? `${course.id}-UCC` 
+    : course.code;
+
+  return (
+    <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors group">
+      <Checkbox
+        checked={checkedCourses.has(courseKey)}
+        onCheckedChange={() => onToggleCompletion(courseKey)}
+        className="h-4 w-4"
+      />
+      <div className="flex-1">
+        {course.code === "UCC Elective" ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="font-medium font-[Open_Sans]">
+                {selectedUccCourses[course.id] || "UCC Elective"}
+              </span>
+              {course.name && (
+                <>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <span className="text-sm font-[Open_Sans]">
+                    {selectedUccCourses[course.id] 
+                      ? uccOptions.find(opt => opt.code === selectedUccCourses[course.id])?.name
+                      : course.name
+                    }
+                  </span>
+                </>
+              )}
+            </div>
+            <Select
+              value={selectedUccCourses[course.id] || ""}
+              onValueChange={(value: string) => onUccSelection(course.id, value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select UCC Course" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="reset">Reset to UCC Elective</SelectItem>
+                {uccOptions.map((option) => (
+                  <SelectItem key={option.code} value={option.code}>
+                    {option.code} - {option.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="font-medium font-[Open_Sans]">{course.code}</span>
+            {course.name && (
+              <>
+                <span className="text-xs text-muted-foreground">•</span>
+                <span className="text-sm font-[Open_Sans]">{course.name}</span>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+      <Badge variant="outline">{course.hours}h</Badge>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onRemoveCourse(semesterId, course.id)}
+        className="opacity-60 hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
+
+// Semester Component
+const SemesterComponent = ({ semester, onToggleCompletion, checkedCourses, selectedUccCourses, uccOptions, onUccSelection, onRemoveCourse, onAddCourse, currentSemester }: {
+  semester: Semester;
+  onToggleCompletion: (courseCode: string) => void;
+  checkedCourses: Set<string>;
+  selectedUccCourses: { [key: string]: string };
+  uccOptions: Array<{code: string, name: string, hours: number}>;
+  onUccSelection: (courseId: string, selectedUccCode: string) => void;
+  onRemoveCourse: (semesterId: string, courseId: string) => void;
+  onAddCourse: (semesterId: string) => void;
+  currentSemester: string;
+}) => {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="font-[Passion_One]">
+            {getSemesterLabel(semester.name, currentSemester)}
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge>{getTotalHours(semester.courses)} hours</Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onRemoveCourse(semester.id, '')}
+              className="opacity-60 hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
+              title="Delete Semester"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {semester.courses.map((course) => (
+          <CourseComponent
+            key={course.id}
+            course={course}
+            semesterId={semester.id}
+            onToggleCompletion={onToggleCompletion}
+            checkedCourses={checkedCourses}
+            selectedUccCourses={selectedUccCourses}
+            uccOptions={uccOptions}
+            onUccSelection={onUccSelection}
+            onRemoveCourse={onRemoveCourse}
+          />
+        ))}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full mt-2 font-[Open_Sans]"
+          onClick={() => onAddCourse(semester.id)}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add Course
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
 function DegreePlanner({ major, onBack }: DegreePlannerProps) {
   const [semesters, setSemesters] = useState<Semester[]>(initialSemesters);
   const [maxHours, setMaxHours] = useState([16]);
@@ -260,6 +417,26 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
         ? { ...semester, courses: semester.courses.filter(course => course.id !== courseId) }
         : semester
     ));
+  };
+
+
+  const addCourse = (semesterId: string) => {
+    console.log('Add course button clicked for semester:', semesterId);
+    const code = prompt('Enter course code (e.g., CSCE 121):');
+    if (code && code.trim()) {
+      const course: Course = {
+        id: `course-${Date.now()}`,
+        code: code.trim(),
+        name: '', // Empty name since we're only asking for code
+        hours: 3 // Default to 3 credit hours
+      };
+      setSemesters(semesters.map(sem => 
+        sem.id === semesterId 
+          ? { ...sem, courses: [...sem.courses, course] }
+          : sem
+      ));
+      console.log('Course added:', course);
+    }
   };
 
   const removeSemester = (semesterId: string) => {
@@ -348,27 +525,39 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     }
   };
 
-  const getSemesterLabel = (semesterName: string) => {
-    if (semesterName === currentSemester) {
-      return `${semesterName} (Current Semester)`;
-    }
-    return semesterName;
-  };
 
   // Fill semesters with courses based on completed courses
   const fillSemesters = () => {
     try {
-      // Convert completed courses to the format expected by CourseAnalyzer
-      const completedCoursesForAnalyzer = completedCourses.map(course => ({
-        code: course,
-        credits: 3 // Default credits, could be improved
-      }));
+      // Convert checked courses to the format expected by CourseAnalyzer
+      const checkedCoursesForAnalyzer = Array.from(checkedCourses).map((courseCode) => {
+        const courseCodeStr = courseCode as string;
+        // Handle UCC courses - extract the actual course code
+        let actualCourseCode = courseCodeStr;
+        if (courseCodeStr.includes('-')) {
+          const parts = courseCodeStr.split('-');
+          if (parts.length > 1 && parts[1] !== 'UCC') {
+            actualCourseCode = parts[1]; // Use the actual UCC course code
+          } else {
+            actualCourseCode = 'UCC Elective'; // Default UCC elective
+          }
+        }
+        
+        return {
+          code: actualCourseCode,
+          credits: 3 // Default credits, could be improved
+        };
+      });
+      
+      console.log('Checked courses for analyzer:', checkedCoursesForAnalyzer);
       
       // Get semester filling results
       const semesterResults = CourseAnalyzer.fillSemestersWithCourses(
-        completedCoursesForAnalyzer, 
+        checkedCoursesForAnalyzer, 
         maxHours[0]
       );
+      
+      console.log('Semester results:', semesterResults);
       
       // Convert results to our semester format
       const newSemesters: Semester[] = semesterResults.map(result => ({
@@ -389,6 +578,7 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
       setTestResults(`✅ Filled ${newSemesters.length} semesters with courses! Check the Degree Planner tab to see the results.`);
       
     } catch (error) {
+      console.error('Error filling semesters:', error);
       setTestResults(`Error filling semesters: ${error}`);
     }
   };
@@ -434,21 +624,24 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
               <FileText className="h-4 w-4" />
               Degree Template
             </TabsTrigger>
-            <TabsTrigger value="previous" className="flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4">
-              <History className="h-4 w-4" />
-              Previous Courses
-            </TabsTrigger>
           </TabsList>
 
-          {/* Semester Filling Button */}
-          <div className="mt-4 flex justify-center">
-            <Button 
-              onClick={fillSemesters}
-              className="font-[Open_Sans] bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 hover:text-blue-700 px-6 py-2 rounded-lg shadow-sm"
-            >
-              Generate Degree Plan
-            </Button>
-          </div>
+            {/* Semester Filling Button */}
+            <div className="mt-4 flex justify-center">
+              <Button 
+                onClick={fillSemesters}
+                className="font-[Open_Sans] bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 hover:text-blue-700 px-6 py-2 rounded-lg shadow-sm"
+              >
+                Generate Degree Plan
+              </Button>
+            </div>
+
+            {/* Instructions */}
+            <div className="mt-2 flex justify-center">
+              <div className="text-sm text-gray-600 bg-gray-100 p-2 rounded">
+                <p>💡 <strong>Tip:</strong> Use "Generate Degree Plan" to automatically fill semesters with courses</p>
+              </div>
+            </div>
 
            {/* Test Results Display */}
            {testResults && (
@@ -460,17 +653,17 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
              </div>
            )}
 
-            <TabsContent value="planner" className="space-y-6 mt-6">
-             <div className="bg-white rounded-lg shadow-lg p-6">
+          <TabsContent value="planner" className="space-y-6 mt-6">
+            <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-[Passion_One] text-gray-800">Progress Overview</h2>
                 <div className="flex items-center gap-3">
-                  <Badge variant="secondary">
+                <Badge variant="secondary">
                     {getCompletedCredits()} / 120 Credits Completed
                   </Badge>
                   <Badge variant="outline">
                     {getTotalCredits()} Total Credits Planned
-                  </Badge>
+                </Badge>
                 </div>
               </div>
               <div className="w-full bg-secondary rounded-full h-3">
@@ -488,125 +681,18 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
 
             <div className="grid md:grid-cols-2 gap-6">
               {semesters.map((semester) => (
-                <Card key={semester.id}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="font-[Passion_One]">
-                        {getSemesterLabel(semester.name)}
-                      </CardTitle>
-                      <div className="flex items-center gap-2">
-                        <Badge>{getTotalHours(semester.courses)} hours</Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeSemester(semester.id)}
-                          className="opacity-60 hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
-                          title="Delete Semester"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {semester.courses.map((course) => (
-                      <div
-                        key={course.id}
-                        className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors group"
-                      >
-                        <GripVertical className="h-4 w-4 text-muted-foreground" />
-                        <Checkbox
-                          checked={checkedCourses.has(course.code === "UCC Elective" && selectedUccCourses[course.id] ? `${course.id}-${selectedUccCourses[course.id]}` : course.code === "UCC Elective" ? `${course.id}-UCC` : course.code)}
-                          onCheckedChange={() => toggleCourseCompletion(course.code === "UCC Elective" && selectedUccCourses[course.id] ? `${course.id}-${selectedUccCourses[course.id]}` : course.code === "UCC Elective" ? `${course.id}-UCC` : course.code)}
-                          className="h-4 w-4"
-                        />
-                        <div className="flex-1">
-                          {course.code === "UCC Elective" ? (
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium font-[Open_Sans]">
-                                  {selectedUccCourses[course.id] || "UCC Elective"}
-                                </span>
-                                {course.name && (
-                                  <>
-                                    <span className="text-xs text-muted-foreground">•</span>
-                                    <span className="text-sm font-[Open_Sans]">
-                                      {selectedUccCourses[course.id] 
-                                        ? uccOptions.find(opt => opt.code === selectedUccCourses[course.id])?.name
-                                        : course.name
-                                      }
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                              <Select
-                                value={selectedUccCourses[course.id] || ""}
-                                onValueChange={(value: string) => handleUccSelection(course.id, value)}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select UCC Course" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="reset">Reset to UCC Elective</SelectItem>
-                                  {uccOptions.map((option) => (
-                                    <SelectItem key={option.code} value={option.code}>
-                                      {option.code} - {option.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium font-[Open_Sans]">{course.code}</span>
-                              {course.name && (
-                                <>
-                                  <span className="text-xs text-muted-foreground">•</span>
-                                  <span className="text-sm font-[Open_Sans]">{course.name}</span>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <Badge variant="outline">{course.hours}h</Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeCourse(semester.id, course.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity font-[Open_Sans]"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full mt-2 font-[Open_Sans]"
-                      onClick={() => {
-                        console.log('Add course button clicked for semester:', semester.id);
-                        const code = prompt('Enter course code (e.g., CSCE 121):');
-                        if (code && code.trim()) {
-                          const course: Course = {
-                            id: `course-${Date.now()}`,
-                            code: code.trim(),
-                            name: '', // Empty name since we're only asking for code
-                            hours: 3 // Default to 3 credit hours
-                          };
-                          setSemesters(semesters.map(sem => 
-                            sem.id === semester.id 
-                              ? { ...sem, courses: [...sem.courses, course] }
-                              : sem
-                          ));
-                          console.log('Course added:', course);
-                        }
-                      }}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Course
-                    </Button>
-                  </CardContent>
-                </Card>
+                <SemesterComponent
+                  key={semester.id}
+                  semester={semester}
+                  onToggleCompletion={toggleCourseCompletion}
+                  checkedCourses={checkedCourses}
+                  selectedUccCourses={selectedUccCourses}
+                  uccOptions={uccOptions}
+                  onUccSelection={handleUccSelection}
+                  onRemoveCourse={removeCourse}
+                  onAddCourse={addCourse}
+                  currentSemester={currentSemester}
+                />
               ))}
             </div>
 
@@ -646,14 +732,6 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
               onCourseCompleted={handleCourseCompleted}
               onCourseUnchecked={handleCourseUnchecked}
               checkedCourses={checkedCourses}
-            />
-          </TabsContent>
-
-          <TabsContent value="previous" className="mt-6">
-            <PreviousCourses 
-              major={major} 
-              onBack={() => {}} 
-              initialTamuCourses={tamuCourses}
             />
           </TabsContent>
         </Tabs>
