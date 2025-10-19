@@ -60,12 +60,17 @@ function Welcome({
 }: WelcomeProps) {
   const [major, setMajor] = useState(lastMajor || '');
   const [minor, setMinor] = useState('');
+<<<<<<< HEAD
   const [certificate, setCertificate] = useState('');
   const [maxHours, setMaxHours] = useState<number[]>([16]);
   const [currentYear, setCurrentYear] = useState<string>('');
   const [currentSemester, setCurrentSemester] = useState<string>('');
   const [yearError, setYearError] = useState<string>('');
   const [semesterError, setSemesterError] = useState<string>('');
+=======
+  const [maxHours, setMaxHours] = useState<number[]>([16]);
+  const [currentYear, setCurrentYear] = useState<string>('Freshman');
+>>>>>>> origin/kaori
   const [submitted, setSubmitted] = useState(!!lastMajor);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -84,7 +89,10 @@ function Welcome({
     if (welcomeState === 'initial') {
       setMajor('');
       setMinor('');
+<<<<<<< HEAD
       setCertificate('');
+=======
+>>>>>>> origin/kaori
       setMaxHours([16]);
       setCurrentYear('Freshman');
       setSubmitted(false);
@@ -129,10 +137,15 @@ function Welcome({
       onGoToSemester && onGoToSemester({ 
         major, 
         minor: minor.trim() || undefined, 
+<<<<<<< HEAD
         certificate: certificate.trim() || undefined,
         maxHours: maxHours[0],
         currentYear,
         currentSemester
+=======
+        maxHours: maxHours[0],
+        currentYear
+>>>>>>> origin/kaori
       });
     }, 1400);
   }
@@ -281,6 +294,7 @@ function Welcome({
                     />
                   </div>
                   
+<<<<<<< HEAD
                   <div className="space-y-2">
                     <Label htmlFor="certificate-input">Certificate (optional)</Label>
                     <Input
@@ -361,6 +375,47 @@ function Welcome({
                     </div>
                   </div>
                   
+=======
+                  
+                  <div className="border-t pt-4 space-y-4">
+                    <h3 className="font-semibold text-lg font-[Open_Sans]">Academic Settings</h3>
+                    
+                    <div className="space-y-2">
+                      <Label className="font-[Open_Sans]">
+                        Max Hours per Semester: {maxHours[0]}
+                      </Label>
+                      <Slider
+                        min={12}
+                        max={20}
+                        step={1}
+                        value={maxHours}
+                        onValueChange={setMaxHours}
+                        className="mt-2"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                        <span>12</span>
+                        <span>16</span>
+                        <span>20</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="font-[Open_Sans]">Current Year</Label>
+                      <Select value={currentYear} onValueChange={setCurrentYear}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Freshman">Freshman</SelectItem>
+                          <SelectItem value="Sophomore">Sophomore</SelectItem>
+                          <SelectItem value="Junior">Junior</SelectItem>
+                          <SelectItem value="Senior">Senior</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+>>>>>>> origin/kaori
                   <Button 
                     type="submit" 
                     className="w-full font-[Open_Sans] transition-all duration-200 hover:scale-105"
@@ -427,6 +482,7 @@ function Welcome({
                           />
                         </div>
                         
+<<<<<<< HEAD
                         <div className="space-y-2">
                           <Label htmlFor="certificate-input-login" className="font-[Open_Sans]">
                             Certificate (Optional)
@@ -439,6 +495,8 @@ function Welcome({
                             className="transition-all duration-200 focus:scale-105"
                           />
                         </div>
+=======
+>>>>>>> origin/kaori
                       </div>
                       
                       <div className="border-t pt-4 space-y-4">
@@ -464,6 +522,7 @@ function Welcome({
                         </div>
 
                         <div className="space-y-2">
+<<<<<<< HEAD
                           <Label className="font-[Open_Sans]">Current Year *</Label>
                           <Select 
                             value={currentYear || undefined} 
@@ -473,6 +532,11 @@ function Welcome({
                             }}
                           >
                             <SelectTrigger className={yearError ? 'border-red-500' : ''}>
+=======
+                          <Label className="font-[Open_Sans]">Current Year</Label>
+                          <Select value={currentYear} onValueChange={setCurrentYear}>
+                            <SelectTrigger>
+>>>>>>> origin/kaori
                               <SelectValue placeholder="Select Year" />
                             </SelectTrigger>
                             <SelectContent>
@@ -482,6 +546,7 @@ function Welcome({
                               <SelectItem value="Senior">Senior</SelectItem>
                             </SelectContent>
                           </Select>
+<<<<<<< HEAD
                           {yearError && (
                             <p className="text-sm text-red-500 font-[Open_Sans]">{yearError}</p>
                           )}
@@ -507,6 +572,8 @@ function Welcome({
                           {semesterError && (
                             <p className="text-sm text-red-500 font-[Open_Sans]">{semesterError}</p>
                           )}
+=======
+>>>>>>> origin/kaori
                         </div>
                       </div>
                       

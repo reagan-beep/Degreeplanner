@@ -20,6 +20,7 @@ interface PageData {
   certificate?: string;
   maxHours?: number;
   currentYear?: string;
+  currentSemester?: string;
 }
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
   const [lastCertificate, setLastCertificate] = useState("");
   const [lastMaxHours, setLastMaxHours] = useState<number>(16);
   const [lastCurrentYear, setLastCurrentYear] = useState<string>("Freshman");
+  const [lastCurrentSemester, setLastCurrentSemester] = useState<string>("1st Semester");
 
   const handleBack = (toHome = false) => {
     if (toHome) {
@@ -48,6 +50,7 @@ function App() {
     setLastCertificate(data.certificate || "");
     setLastMaxHours(data.maxHours || 16);
     setLastCurrentYear(data.currentYear || "Freshman");
+    setLastCurrentSemester(data.currentSemester || "1st Semester");
     setPage("semester");
   };
 
@@ -57,6 +60,7 @@ function App() {
     setLastCertificate(data.certificate || "");
     setLastMaxHours(data.maxHours || 16);
     setLastCurrentYear(data.currentYear || "Freshman");
+    setLastCurrentSemester(data.currentSemester || "1st Semester");
     setPage("courses");
   };
 
@@ -66,6 +70,7 @@ function App() {
     setLastCertificate(data.certificate || "");
     setLastMaxHours(data.maxHours || 16);
     setLastCurrentYear(data.currentYear || "Freshman");
+    setLastCurrentSemester(data.currentSemester || "1st Semester");
     setPage("template");
   };
 
@@ -75,6 +80,7 @@ function App() {
     setLastCertificate(data.certificate || "");
     setLastMaxHours(data.maxHours || 16);
     setLastCurrentYear(data.currentYear || "Freshman");
+    setLastCurrentSemester(data.currentSemester || "1st Semester");
     setPage("previous");
   };
 
@@ -95,12 +101,17 @@ function App() {
       {page === "semester" && (
         <DegreePlanner 
           major={lastMajor} 
+          minor={lastMinor}
+          certificate={lastCertificate}
+          maxHours={lastMaxHours}
+          currentYear={lastCurrentYear}
+          currentSemester={lastCurrentSemester}
           onBack={handleBack}
         />
       )}
 
       {page === "courses" && (
-        <CourseList major={lastMajor} minor={lastMinor} certificate={lastCertificate} onBack={handleBack} />
+        <CourseList major={lastMajor} minor={lastMinor} onBack={handleBack} />
       )}
 
       {page === "template" && (
