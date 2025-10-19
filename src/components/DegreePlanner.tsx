@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Checkbox } from './ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { ArrowLeft, GripVertical, Plus, X, Calendar, BookOpen, FileText, History, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, GripVertical, Plus, X, Calendar, BookOpen, FileText, History } from 'lucide-react';
 import CourseList from './CourseList';
 import Template from './Template';
 import PreviousCourses from './PreviousCourses';
@@ -33,8 +33,8 @@ interface DegreePlannerProps {
   onBack: (toHome?: boolean) => void;
 }
 
-// Convert CPEN data to semester format
-const convertCpenDataToSemesters = (): Semester[] => {
+// Convert CPEN data to semester format with max hours constraint
+const convertCpenDataToSemesters = (maxHoursPerSemester: number = 16): Semester[] => {
   const cpenCourses = cpenData["Computer Engineering"];
   const semesters: { [key: string]: Course[] } = {};
 
@@ -101,7 +101,71 @@ const convertCpenDataToSemesters = (): Semester[] => {
     }
   });
 
-  return semesterArray;
+  // Apply max hours constraint by redistributing courses if needed
+  const redistributedSemesters = applyMaxHoursConstraint(semesterArray, maxHoursPerSemester);
+
+  return redistributedSemesters;
+};
+
+// Helper function to redistribute courses based on max hours constraint
+const applyMaxHoursConstraint = (semesters: Semester[], maxHours: number): Semester[] => {
+  const redistributed: Semester[] = [];
+  let overflowCourses: Course[] = [];
+  
+  semesters.forEach(semester => {
+    const semesterCourses: Course[] = [];
+    let currentHours = 0;
+    
+    // Add courses from previous overflow first
+    while (overflowCourses.length > 0 && currentHours + overflowCourses[0].hours <= maxHours) {
+      const course = overflowCourses.shift()!;
+      semesterCourses.push(course);
+      currentHours += course.hours;
+    }
+    
+    // Add courses from current semester
+    semester.courses.forEach(course => {
+      if (currentHours + course.hours <= maxHours) {
+        semesterCourses.push(course);
+        currentHours += course.hours;
+      } else {
+        overflowCourses.push(course);
+      }
+    });
+    
+    redistributed.push({
+      ...semester,
+      courses: semesterCourses
+    });
+  });
+  
+  // If there are still overflow courses, create additional semesters
+  let semesterCounter = semesters.length + 1;
+  while (overflowCourses.length > 0) {
+    const semesterCourses: Course[] = [];
+    let currentHours = 0;
+    
+    while (overflowCourses.length > 0 && currentHours + overflowCourses[0].hours <= maxHours) {
+      const course = overflowCourses.shift()!;
+      semesterCourses.push(course);
+      currentHours += course.hours;
+    }
+    
+    if (semesterCourses.length > 0) {
+      const yearNum = Math.ceil(semesterCounter / 2);
+      const semesterType = semesterCounter % 2 === 1 ? "Fall" : "Spring";
+      
+      redistributed.push({
+        id: `additional-semester-${semesterCounter}`,
+        name: `${semesterType} Year ${yearNum}`,
+        courses: semesterCourses
+      });
+    }
+    
+    semesterCounter++;
+  }
+  
+  return redistributed;
 };
 
 const initialSemesters: Semester[] = convertCpenDataToSemesters();
@@ -156,6 +220,12 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Regenerate semesters when max hours changes
+  useEffect(() => {
+    const newSemesters = convertCpenDataToSemesters(maxHours[0]);
+    setSemesters(newSemesters);
+  }, [maxHours]);
+
   const getTotalHours = (courses: Course[]) => {
     return courses.reduce((sum, course) => sum + course.hours, 0);
   };
@@ -169,11 +239,13 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     semesters.forEach(semester => {
       semester.courses.forEach(course => {
         // Check if this course is completed (checked)
-        const courseCode = course.code === "UCC Elective" && selectedUccCourses[course.id] 
-          ? selectedUccCourses[course.id] 
+        const courseKey = course.code === "UCC Elective" && selectedUccCourses[course.id] 
+          ? `${course.id}-${selectedUccCourses[course.id]}`
+          : course.code === "UCC Elective" 
+          ? `${course.id}-UCC`
           : course.code;
         
-        if (checkedCourses.has(courseCode)) {
+        if (checkedCourses.has(courseKey)) {
           completedCredits += course.hours;
         }
       });
@@ -201,10 +273,22 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     const newCheckedCourses = new Set([...checkedCourses, course]);
     setCheckedCourses(newCheckedCourses);
     
+    // Extract actual course name for TAMU courses (remove course.id prefix if present)
+    let tamuCourseCode = course;
+    if (course.includes('-')) {
+      // This is a UCC course with course.id prefix, extract the actual course name
+      const parts = course.split('-');
+      if (parts.length > 1 && parts[1] !== 'UCC') {
+        tamuCourseCode = parts[1]; // Use the actual UCC course code
+      } else {
+        tamuCourseCode = 'UCC Elective'; // Default UCC elective
+      }
+    }
+    
     // Add to TAMU courses if not already there
-    const courseExists = tamuCourses.some(tamuCourse => tamuCourse.code === course);
+    const courseExists = tamuCourses.some(tamuCourse => tamuCourse.code === tamuCourseCode);
     if (!courseExists) {
-      const newTamuCourses = [...tamuCourses, { code: course, timestamp: Date.now() }];
+      const newTamuCourses = [...tamuCourses, { code: tamuCourseCode, timestamp: Date.now() }];
       setTamuCourses(newTamuCourses);
       localStorage.setItem('tamuCourses', JSON.stringify(newTamuCourses));
     }
@@ -220,8 +304,20 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     newCheckedCourses.delete(course);
     setCheckedCourses(newCheckedCourses);
     
+    // Extract actual course name for TAMU courses (remove course.id prefix if present)
+    let tamuCourseCode = course;
+    if (course.includes('-')) {
+      // This is a UCC course with course.id prefix, extract the actual course name
+      const parts = course.split('-');
+      if (parts.length > 1 && parts[1] !== 'UCC') {
+        tamuCourseCode = parts[1]; // Use the actual UCC course code
+      } else {
+        tamuCourseCode = 'UCC Elective'; // Default UCC elective
+      }
+    }
+    
     // Remove from TAMU courses
-    const newTamuCourses = tamuCourses.filter(tamuCourse => tamuCourse.code !== course);
+    const newTamuCourses = tamuCourses.filter(tamuCourse => tamuCourse.code !== tamuCourseCode);
     setTamuCourses(newTamuCourses);
     localStorage.setItem('tamuCourses', JSON.stringify(newTamuCourses));
     
@@ -342,12 +438,7 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
               <History className="h-4 w-4" />
               Previous Courses
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4">
-              <SlidersHorizontal className="h-4 w-4" />
-              Settings
-            </TabsTrigger>
           </TabsList>
-
 
           {/* Semester Filling Button */}
           <div className="mt-4 flex justify-center">
@@ -369,8 +460,8 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
              </div>
            )}
 
-          <TabsContent value="planner" className="space-y-6 mt-6">
-            <div className="bg-white rounded-lg shadow-lg p-6">
+            <TabsContent value="planner" className="space-y-6 mt-6">
+             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-[Passion_One] text-gray-800">Progress Overview</h2>
                 <div className="flex items-center gap-3">
@@ -389,7 +480,7 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                 ></div>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground mt-2">
-                <span>0 credits</span>
+                <span>{getCompletedCredits()} credits</span>
                 <span>{Math.round((getCompletedCredits() / 120) * 100)}% Complete</span>
                 <span>120 credits</span>
               </div>
@@ -425,8 +516,8 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                       >
                         <GripVertical className="h-4 w-4 text-muted-foreground" />
                         <Checkbox
-                          checked={checkedCourses.has(course.code === "UCC Elective" && selectedUccCourses[course.id] ? selectedUccCourses[course.id] : course.code)}
-                          onCheckedChange={() => toggleCourseCompletion(course.code === "UCC Elective" && selectedUccCourses[course.id] ? selectedUccCourses[course.id] : course.code)}
+                          checked={checkedCourses.has(course.code === "UCC Elective" && selectedUccCourses[course.id] ? `${course.id}-${selectedUccCourses[course.id]}` : course.code === "UCC Elective" ? `${course.id}-UCC` : course.code)}
+                          onCheckedChange={() => toggleCourseCompletion(course.code === "UCC Elective" && selectedUccCourses[course.id] ? `${course.id}-${selectedUccCourses[course.id]}` : course.code === "UCC Elective" ? `${course.id}-UCC` : course.code)}
                           className="h-4 w-4"
                         />
                         <div className="flex-1">
@@ -564,58 +655,6 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
               onBack={() => {}} 
               initialTamuCourses={tamuCourses}
             />
-          </TabsContent>
-
-          <TabsContent value="settings" className="mt-6">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-[Passion_One] text-gray-800 mb-4">Academic Settings</h2>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label className="font-[Open_Sans]">
-                      Max Hours per Semester: {maxHours[0]}
-                    </Label>
-                    <Slider
-                      min={12}
-                      max={20}
-                      step={1}
-                      value={maxHours}
-                      onValueChange={setMaxHours}
-                      className="mt-2"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>12</span>
-                      <span>16</span>
-                      <span>20</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="font-[Open_Sans]">Current Year</Label>
-                    <Select value={currentYear} onValueChange={setCurrentYear}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Year" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Freshman">Freshman</SelectItem>
-                        <SelectItem value="Sophomore">Sophomore</SelectItem>
-                        <SelectItem value="Junior">Junior</SelectItem>
-                        <SelectItem value="Senior">Senior</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <p className="text-sm text-muted-foreground font-[Open_Sans]">
-                      These settings will help customize your degree planning experience and course recommendations.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </TabsContent>
         </Tabs>
       </div>

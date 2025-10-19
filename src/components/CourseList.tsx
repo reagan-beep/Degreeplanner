@@ -110,16 +110,6 @@ function CourseList({ major, minor, certificate, onBack }: CourseListProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 relative">
-      {/* Logo in top left corner */}
-      <div className="absolute top-6 left-6 z-10">
-        <button 
-          onClick={() => onBack(true)}
-          className="text-3xl tracking-tight text-[rgba(85,0,0,0.98)] font-[Passion_One] font-bold italic hover:opacity-80 transition-opacity"
-        >
-          How-De-gree
-        </button>
-      </div>
-
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={() => onBack()} className="font-[Open_Sans]">
