@@ -1,0 +1,49 @@
+/* Subtle, reusable animation utilities */
+
+@keyframes floatUp {
+  0% { transform: translateY(6px); opacity: .85; }
+  50% { transform: translateY(-6px); opacity: 1; }
+  100% { transform: translateY(6px); opacity: .85; }
+}
+
+@keyframes pulseSoft {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fadeSlideUp {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.anim-float {
+  animation: floatUp 4s ease-in-out infinite;
+}
+
+.anim-pulse-soft {
+  animation: pulseSoft 2.2s var(--default-transition-timing-function, ease-in-out) infinite;
+}
+
+.anim-fade-slide-up {
+  animation: fadeSlideUp .6s var(--default-transition-timing-function, ease-out) both;
+}
+
+.hover-lift {
+  transition: transform .25s var(--default-transition-timing-function, ease), box-shadow .25s var(--default-transition-timing-function, ease);
+}
+.hover-lift:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 10px 25px -10px rgba(31, 41, 55, 0.25);
+}
+
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 0 rgba(99,102,241,0);
+  transition: box-shadow .2s ease;
+}
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 3px rgba(99,102,241,.35);
+}
+
+

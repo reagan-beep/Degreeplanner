@@ -122,7 +122,7 @@ function Welcome({
 
   return (
     <div
-      className="min-h-screen bg-[rgb(243,243,243)] relative scroll-smooth"
+      className="min-h-screen relative scroll-smooth overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
       style={
         path === 'login'
           ? {
@@ -133,6 +133,9 @@ function Welcome({
           : {}
       }
     >
+      {/* Decorative animated blobs */}
+      <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 opacity-20 blur-3xl anim-float"></div>
+      <div className="pointer-events-none absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-gradient-to-r from-purple-600 to-blue-600 opacity-10 blur-3xl anim-float" style={{ animationDelay: '180ms' }}></div>
       {/* Black overlay for login page */}
       {path === 'login' && (
         <div className="absolute inset-0 bg-black/60"></div>
@@ -165,10 +168,10 @@ function Welcome({
           >
             <div className="text-center space-y-8">
               <div className="space-y-4">
-                <h1 className="text-6xl tracking-tight text-[rgba(85,0,0,0.98)] font-[Passion_One] font-bold italic lg:text-[128px]">
-                  Welcome to How-De-gree!
+                <h1 className="text-6xl tracking-tight leading-none font-[Passion_One] font-bold italic lg:text-[128px] anim-fade-slide-up">
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Welcome to How-De-gree!</span>
                 </h1>
-                <p className="text-[rgb(11,11,12)] font-[Open_Sans] text-lg">Your personalized degree planner.</p>
+                <p className="text-[rgb(11,11,12)] font-[Open_Sans] text-lg opacity-80 anim-fade-slide-up" style={{ animationDelay: '80ms' }}>Your personalized degree planner.</p>
               </div>
              
               {/* Scroll indicator */}
@@ -206,10 +209,10 @@ function Welcome({
                 <p className="text-muted-foreground font-[Open_Sans]">Choose how you'd like to begin planning your degree</p>
               </div>
              
-              <div className="space-y-4">
+              <div className="space-y-4 anim-fade-slide-up" style={{ animationDelay: '120ms' }}>
                 <Button
                   size="lg"
-                  className="w-full font-[Open_Sans] h-12 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  className="w-full font-[Open_Sans] h-12 transition-all duration-300 hover:scale-105 hover:shadow-lg hover-lift bg-gradient-to-r from-blue-600 to-purple-600 text-white"
                   onClick={() => setPath('guest')}
                 >
                   Continue as Guest
@@ -218,7 +221,7 @@ function Welcome({
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full font-[Open_Sans] h-12 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  className="w-full font-[Open_Sans] h-12 transition-all duration-300 hover:scale-105 hover:shadow-lg hover-lift"
                   onClick={() => setPath('login')}
                 >
                   Sign In
@@ -236,7 +239,7 @@ function Welcome({
           <div className="w-full max-w-2xl space-y-8 relative z-10">
             {path === 'guest' && (
               <div className="bg-white rounded-lg shadow-xl p-8 space-y-6 animate-in fade-in slide-in-from-top-2 duration-500">
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4 anim-fade-slide-up">
                   <div className="space-y-2">
                     <Label htmlFor="major-input">Enter your major</Label>
                     <Input
@@ -245,7 +248,7 @@ function Welcome({
                       list="major-suggestions"
                       value={major}
                       onChange={(e) => setMajor(e.target.value)}
-                      className="transition-all duration-200 focus:scale-105"
+                      className="transition-all duration-200 focus:scale-105 focus-ring"
                     />
                     <datalist id="major-suggestions">
                       {majorSuggestions.map((suggestion) => (
@@ -261,7 +264,7 @@ function Welcome({
                       placeholder="e.g. Mathematics"
                       value={minor}
                       onChange={(e) => setMinor(e.target.value)}
-                      className="transition-all duration-200 focus:scale-105"
+                      className="transition-all duration-200 focus:scale-105 focus-ring"
                     />
                   </div>
                  
@@ -292,7 +295,7 @@ function Welcome({
                     <div className="space-y-2">
                       <Label className="font-[Open_Sans]">Current Year</Label>
                       <Select value={currentYear} onValueChange={setCurrentYear}>
-                        <SelectTrigger>
+                        <SelectTrigger className="focus-ring">
                           <SelectValue placeholder="Select Year" />
                         </SelectTrigger>
                         <SelectContent>
@@ -307,14 +310,14 @@ function Welcome({
                  
                   <Button
                     type="submit"
-                    className="w-full font-[Open_Sans] transition-all duration-200 hover:scale-105"
+                    className="w-full font-[Open_Sans] transition-all duration-200 hover:scale-105 hover-lift bg-gradient-to-r from-blue-600 to-purple-600 text-white"
                   >
                     Continue
                   </Button>
                 </form>
                 <Button
                   variant="ghost"
-                  className="w-full font-[Open_Sans] transition-all duration-200 hover:scale-105"
+                  className="w-full font-[Open_Sans] transition-all duration-200 hover:scale-105 hover-lift"
                   onClick={() => setPath(null)}
                 >
                   Back
@@ -349,7 +352,7 @@ function Welcome({
                           list="major-suggestions-login"
                           value={major}
                           onChange={(e) => setMajor(e.target.value)}
-                          className="transition-all duration-200 focus:scale-105"
+                          className="transition-all duration-200 focus:scale-105 focus-ring"
                         />
                         <datalist id="major-suggestions-login">
                           {majorSuggestions.map((suggestion) => (
@@ -368,7 +371,7 @@ function Welcome({
                             placeholder="e.g. Mathematics"
                             value={minor}
                             onChange={(e) => setMinor(e.target.value)}
-                            className="transition-all duration-200 focus:scale-105"
+                            className="transition-all duration-200 focus:scale-105 focus-ring"
                           />
                         </div>
                        
@@ -400,7 +403,7 @@ function Welcome({
                         <div className="space-y-2">
                           <Label className="font-[Open_Sans]">Current Year</Label>
                           <Select value={currentYear} onValueChange={setCurrentYear}>
-                            <SelectTrigger>
+                            <SelectTrigger className="focus-ring">
                               <SelectValue placeholder="Select Year" />
                             </SelectTrigger>
                             <SelectContent>
@@ -415,7 +418,7 @@ function Welcome({
                      
                       <Button
                         type="submit"
-                        className="w-full font-[Open_Sans] transition-all duration-200 hover:scale-105"
+                        className="w-full font-[Open_Sans] transition-all duration-200 hover:scale-105 hover-lift bg-gradient-to-r from-blue-600 to-purple-600 text-white"
                       >
                         Create My Degree Plan
                       </Button>
@@ -436,7 +439,7 @@ function Welcome({
                    
                     <Button
                       variant="ghost"
-                      className="w-full font-[Open_Sans] transition-all duration-200 hover:scale-105"
+                      className="w-full font-[Open_Sans] transition-all duration-200 hover:scale-105 hover-lift"
                       onClick={() => setPath(null)}
                     >
                       Back to Options
