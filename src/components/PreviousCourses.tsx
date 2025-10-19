@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { X, Plus } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface Course {
   code: string;
@@ -20,9 +21,10 @@ interface TransferCourse {
 interface PreviousCoursesProps {
   major: string;
   onBack: (toHome?: boolean) => void;
+  completedCourses?: string[];
 }
 
-function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
+function PreviousCourses({ major, onBack, completedCourses = [] }: PreviousCoursesProps) {
   const [tamuCourses, setTamuCourses] = useState<Course[]>([]);
   const [transferCourses, setTransferCourses] = useState<TransferCourse[]>([]);
   const [newTamuCourse, setNewTamuCourse] = useState({ code: '' });
@@ -77,6 +79,32 @@ function PreviousCourses({ major, onBack }: PreviousCoursesProps) {
           </h1>
           <p className="text-muted-foreground">For {major}</p>
         </div>
+
+        {/* Completed Courses from Template */}
+        {completedCourses.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed Courses (from Template)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {completedCourses.map((course, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-green-800">{course}</span>
+                    </div>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      Completed
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* TAMU Courses Section */}

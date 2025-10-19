@@ -11,6 +11,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Slider } from './ui/slider';
+import cpenData from '../data/ce_courses.json';
 
 interface Course {
   code: string;
@@ -30,51 +31,94 @@ interface DegreePlannerProps {
   onBack: (toHome?: boolean) => void;
 }
 
-// Mock data for demonstration
-const initialSemesters: Semester[] = [
-  {
-    id: 'fall-1',
-    name: 'Fall Year 1',
-    courses: [
-      { id: '1', code: 'CSCE 121', name: 'Programming Design', hours: 3 },
-      { id: '2', code: 'MATH 151', name: 'Calculus I', hours: 4 },
-      { id: '3', code: 'ENGL 104', name: 'Composition & Rhetoric', hours: 3 },
-      { id: '4', code: 'CHEM 107', name: 'General Chemistry', hours: 4 },
-    ],
-  },
-  {
-    id: 'spring-1',
-    name: 'Spring Year 1',
-    courses: [
-      { id: '5', code: 'CSCE 221', name: 'Data Structures', hours: 3 },
-      { id: '6', code: 'MATH 152', name: 'Calculus II', hours: 4 },
-      { id: '7', code: 'PHYS 206', name: 'Newtonian Mechanics', hours: 3 },
-      { id: '8', code: 'HIST 105', name: 'History of US', hours: 3 },
-    ],
-  },
-  {
-    id: 'fall-2',
-    name: 'Fall Year 2',
-    courses: [
-      { id: '9', code: 'CSCE 314', name: 'Programming Languages', hours: 3 },
-      { id: '10', code: 'CSCE 312', name: 'Computer Organization', hours: 4 },
-      { id: '11', code: 'MATH 304', name: 'Linear Algebra', hours: 3 },
-    ],
-  },
-  {
-    id: 'spring-2',
-    name: 'Spring Year 2',
-    courses: [
-      { id: '12', code: 'CSCE 310', name: 'Database Systems', hours: 3 },
-      { id: '13', code: 'CSCE 315', name: 'Software Engineering', hours: 3 },
-    ],
-  },
-];
+// Convert CPEN data to semester format
+const convertCpenDataToSemesters = (): Semester[] => {
+  const cpenCourses = cpenData["Computer Engineering"];
+  const semesters: { [key: string]: Course[] } = {};
+
+  cpenCourses.forEach((course, index) => {
+    const semesterKey = course.semester;
+    if (!semesters[semesterKey]) {
+      semesters[semesterKey] = [];
+    }
+
+    // Handle courses with alternatives
+    if (course.alternatives && course.alternatives.length > 0) {
+      // Add the first alternative as the main course
+      const mainCourse = course.alternatives[0];
+      semesters[semesterKey].push({
+        id: `course-${index}`,
+        code: mainCourse.course,
+        name: mainCourse.name,
+        hours: mainCourse.credits
+      });
+    } else {
+      // Handle UCC courses with special naming
+      let courseCode = course.course;
+      let courseName = course.name;
+      
+      if (course.course.includes("University Core Curriculum")) {
+        courseCode = "UCC Elective";
+        courseName = "University Core Curriculum";
+      } else if (course.course.includes("Senior design")) {
+        courseCode = "Senior Design";
+        courseName = "Senior Design Project";
+      }
+
+      semesters[semesterKey].push({
+        id: `course-${index}`,
+        code: courseCode,
+        name: Array.isArray(courseName) ? courseName[0] : (courseName || courseCode),
+        hours: course.credits
+      });
+    }
+  });
+
+  // Convert to array format with proper semester names
+  const semesterArray: Semester[] = [];
+  
+  // Define semester order and mapping
+  const semesterMapping = {
+    "First Year Fall": "Fall Year 1",
+    "First Year Spring": "Spring Year 1", 
+    "Second Year Fall": "Fall Year 2",
+    "Second Year Spring": "Spring Year 2",
+    "Third Year Fall": "Fall Year 3",
+    "Third Year Spring": "Spring Year 3",
+    "Fourth Year Fall": "Fall Year 4",
+    "Fourth Year Spring": "Spring Year 4"
+  };
+
+  Object.entries(semesterMapping).forEach(([cpenSemester, displaySemester]) => {
+    if (semesters[cpenSemester]) {
+      semesterArray.push({
+        id: cpenSemester.toLowerCase().replace(/\s+/g, '-'),
+        name: displaySemester,
+        courses: semesters[cpenSemester]
+      });
+    }
+  });
+
+  return semesterArray;
+};
+
+const initialSemesters: Semester[] = convertCpenDataToSemesters();
 
 function DegreePlanner({ major, onBack }: DegreePlannerProps) {
   const [semesters, setSemesters] = useState<Semester[]>(initialSemesters);
   const [maxHours, setMaxHours] = useState([16]);
   const [currentYear, setCurrentYear] = useState("Freshman");
+  const [completedCourses, setCompletedCourses] = useState<string[]>(() => {
+    const saved = localStorage.getItem('completedCourses');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [currentSemester, setCurrentSemester] = useState<string>("Fall Year 1");
+  
+  // Load checked courses from localStorage on component mount
+  const [checkedCourses, setCheckedCourses] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('checkedCourses');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
 
   const getTotalHours = (courses: Course[]) => {
     return courses.reduce((sum, course) => sum + course.hours, 0);
@@ -91,6 +135,32 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
         ? { ...semester, courses: semester.courses.filter(course => course.id !== courseId) }
         : semester
     ));
+  };
+
+  const handleCourseCompleted = (course: string) => {
+    const newCompletedCourses = [...completedCourses, course];
+    setCompletedCourses(newCompletedCourses);
+    const newCheckedCourses = new Set([...checkedCourses, course]);
+    setCheckedCourses(newCheckedCourses);
+    localStorage.setItem('completedCourses', JSON.stringify(newCompletedCourses));
+    localStorage.setItem('checkedCourses', JSON.stringify([...newCheckedCourses]));
+  };
+
+  const handleCourseUnchecked = (course: string) => {
+    const newCompletedCourses = completedCourses.filter(c => c !== course);
+    setCompletedCourses(newCompletedCourses);
+    const newCheckedCourses = new Set(checkedCourses);
+    newCheckedCourses.delete(course);
+    setCheckedCourses(newCheckedCourses);
+    localStorage.setItem('completedCourses', JSON.stringify(newCompletedCourses));
+    localStorage.setItem('checkedCourses', JSON.stringify([...newCheckedCourses]));
+  };
+
+  const getSemesterLabel = (semesterName: string) => {
+    if (semesterName === currentSemester) {
+      return `${semesterName} (Current Semester)`;
+    }
+    return semesterName;
   };
 
   return (
@@ -144,6 +214,30 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
             </TabsTrigger>
           </TabsList>
 
+          {/* Semester Selection Dropdown */}
+          <div className="mt-4 flex justify-center">
+            <div className="bg-white rounded-lg shadow-sm border p-4">
+              <Label className="font-[Open_Sans] text-sm font-medium mb-2 block">
+                Select Current Semester:
+              </Label>
+              <Select value={currentSemester} onValueChange={setCurrentSemester}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Select semester" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Fall Year 1">Fall Year 1</SelectItem>
+                  <SelectItem value="Spring Year 1">Spring Year 1</SelectItem>
+                  <SelectItem value="Fall Year 2">Fall Year 2</SelectItem>
+                  <SelectItem value="Spring Year 2">Spring Year 2</SelectItem>
+                  <SelectItem value="Fall Year 3">Fall Year 3</SelectItem>
+                  <SelectItem value="Spring Year 3">Spring Year 3</SelectItem>
+                  <SelectItem value="Fall Year 4">Fall Year 4</SelectItem>
+                  <SelectItem value="Spring Year 4">Spring Year 4</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <TabsContent value="planner" className="space-y-6 mt-6">
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
@@ -165,7 +259,9 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                 <Card key={semester.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="font-[Passion_One]">{semester.name}</CardTitle>
+                      <CardTitle className="font-[Passion_One]">
+                        {getSemesterLabel(semester.name)}
+                      </CardTitle>
                       <Badge>{getTotalHours(semester.courses)} hours</Badge>
                     </div>
                   </CardHeader>
@@ -259,11 +355,17 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
           </TabsContent>
 
           <TabsContent value="template" className="mt-6">
-            <Template major={major} onBack={() => {}} />
+            <Template 
+              major={major} 
+              onBack={() => {}} 
+              onCourseCompleted={handleCourseCompleted}
+              onCourseUnchecked={handleCourseUnchecked}
+              checkedCourses={checkedCourses}
+            />
           </TabsContent>
 
           <TabsContent value="previous" className="mt-6">
-            <PreviousCourses major={major} onBack={() => {}} />
+            <PreviousCourses major={major} onBack={() => {}} completedCourses={completedCourses} />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
