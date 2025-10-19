@@ -237,11 +237,13 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     semesters.forEach(semester => {
       semester.courses.forEach(course => {
         // Check if this course is completed (checked)
-        const courseCode = course.code === "UCC Elective" && selectedUccCourses[course.id] 
-          ? selectedUccCourses[course.id] 
+        const courseKey = course.code === "UCC Elective" && selectedUccCourses[course.id] 
+          ? `${course.id}-${selectedUccCourses[course.id]}`
+          : course.code === "UCC Elective" 
+          ? `${course.id}-UCC`
           : course.code;
         
-        if (checkedCourses.has(courseCode)) {
+        if (checkedCourses.has(courseKey)) {
           completedCredits += course.hours;
         }
       });
@@ -269,10 +271,22 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     const newCheckedCourses = new Set([...checkedCourses, course]);
     setCheckedCourses(newCheckedCourses);
     
+    // Extract actual course name for TAMU courses (remove course.id prefix if present)
+    let tamuCourseCode = course;
+    if (course.includes('-')) {
+      // This is a UCC course with course.id prefix, extract the actual course name
+      const parts = course.split('-');
+      if (parts.length > 1 && parts[1] !== 'UCC') {
+        tamuCourseCode = parts[1]; // Use the actual UCC course code
+      } else {
+        tamuCourseCode = 'UCC Elective'; // Default UCC elective
+      }
+    }
+    
     // Add to TAMU courses if not already there
-    const courseExists = tamuCourses.some(tamuCourse => tamuCourse.code === course);
+    const courseExists = tamuCourses.some(tamuCourse => tamuCourse.code === tamuCourseCode);
     if (!courseExists) {
-      const newTamuCourses = [...tamuCourses, { code: course, timestamp: Date.now() }];
+      const newTamuCourses = [...tamuCourses, { code: tamuCourseCode, timestamp: Date.now() }];
       setTamuCourses(newTamuCourses);
       localStorage.setItem('tamuCourses', JSON.stringify(newTamuCourses));
     }
@@ -288,8 +302,20 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     newCheckedCourses.delete(course);
     setCheckedCourses(newCheckedCourses);
     
+    // Extract actual course name for TAMU courses (remove course.id prefix if present)
+    let tamuCourseCode = course;
+    if (course.includes('-')) {
+      // This is a UCC course with course.id prefix, extract the actual course name
+      const parts = course.split('-');
+      if (parts.length > 1 && parts[1] !== 'UCC') {
+        tamuCourseCode = parts[1]; // Use the actual UCC course code
+      } else {
+        tamuCourseCode = 'UCC Elective'; // Default UCC elective
+      }
+    }
+    
     // Remove from TAMU courses
-    const newTamuCourses = tamuCourses.filter(tamuCourse => tamuCourse.code !== course);
+    const newTamuCourses = tamuCourses.filter(tamuCourse => tamuCourse.code !== tamuCourseCode);
     setTamuCourses(newTamuCourses);
     localStorage.setItem('tamuCourses', JSON.stringify(newTamuCourses));
     
@@ -458,8 +484,8 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                       >
                         <GripVertical className="h-4 w-4 text-muted-foreground" />
                         <Checkbox
-                          checked={checkedCourses.has(course.code === "UCC Elective" && selectedUccCourses[course.id] ? selectedUccCourses[course.id] : course.code)}
-                          onCheckedChange={() => toggleCourseCompletion(course.code === "UCC Elective" && selectedUccCourses[course.id] ? selectedUccCourses[course.id] : course.code)}
+                          checked={checkedCourses.has(course.code === "UCC Elective" && selectedUccCourses[course.id] ? `${course.id}-${selectedUccCourses[course.id]}` : course.code === "UCC Elective" ? `${course.id}-UCC` : course.code)}
+                          onCheckedChange={() => toggleCourseCompletion(course.code === "UCC Elective" && selectedUccCourses[course.id] ? `${course.id}-${selectedUccCourses[course.id]}` : course.code === "UCC Elective" ? `${course.id}-UCC` : course.code)}
                           className="h-4 w-4"
                         />
                         <div className="flex-1">
