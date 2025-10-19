@@ -83,7 +83,7 @@ function App() {
       )}
 
       {page === "semester" && (
-        <DegreePlanner major={lastMajor} onBack={handleBack} />
+        <DegreePlanner major={lastMajor} minor={lastMinor} certificate={lastCertificate} onBack={handleBack} />
       )}
 
       {page === "courses" && (
