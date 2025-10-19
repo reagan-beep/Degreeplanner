@@ -348,37 +348,14 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
             </TabsTrigger>
           </TabsList>
 
-           {/* Semester Selection Dropdown */}
-           <div className="mt-4 flex justify-center">
-             <div className="bg-white rounded-lg shadow-sm border p-4">
-               <Label className="font-[Open_Sans] text-sm font-medium mb-2 block">
-                 Select Current Semester:
-               </Label>
-               <Select value={currentSemester} onValueChange={setCurrentSemester}>
-                 <SelectTrigger className="w-64">
-                   <SelectValue placeholder="Select semester" />
-                 </SelectTrigger>
-                 <SelectContent>
-                   <SelectItem value="Fall Year 1">Fall Year 1</SelectItem>
-                   <SelectItem value="Spring Year 1">Spring Year 1</SelectItem>
-                   <SelectItem value="Fall Year 2">Fall Year 2</SelectItem>
-                   <SelectItem value="Spring Year 2">Spring Year 2</SelectItem>
-                   <SelectItem value="Fall Year 3">Fall Year 3</SelectItem>
-                   <SelectItem value="Spring Year 3">Spring Year 3</SelectItem>
-                   <SelectItem value="Fall Year 4">Fall Year 4</SelectItem>
-                   <SelectItem value="Spring Year 4">Spring Year 4</SelectItem>
-                 </SelectContent>
-               </Select>
-             </div>
-           </div>
 
           {/* Semester Filling Button */}
           <div className="mt-4 flex justify-center">
             <Button 
               onClick={fillSemesters}
-              className="font-[Open_Sans] bg-blue-600 hover:bg-blue-700"
+              className="font-[Open_Sans] bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 hover:text-blue-700 px-6 py-2 rounded-lg shadow-sm"
             >
-              🎯 Fill Semesters with Courses
+              Generate Degree Plan
             </Button>
           </div>
 

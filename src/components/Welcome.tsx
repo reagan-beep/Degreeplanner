@@ -19,6 +19,7 @@ interface PageData {
   certificate?: string;
   maxHours?: number;
   currentYear?: string;
+  currentSemester?: string;
 }
 
 interface WelcomeProps {
@@ -61,7 +62,10 @@ function Welcome({
   const [minor, setMinor] = useState('');
   const [certificate, setCertificate] = useState('');
   const [maxHours, setMaxHours] = useState<number[]>([16]);
-  const [currentYear, setCurrentYear] = useState<string>('Freshman');
+  const [currentYear, setCurrentYear] = useState<string>('');
+  const [currentSemester, setCurrentSemester] = useState<string>('');
+  const [yearError, setYearError] = useState<string>('');
+  const [semesterError, setSemesterError] = useState<string>('');
   const [submitted, setSubmitted] = useState(!!lastMajor);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -92,7 +96,30 @@ function Welcome({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!major.trim()) return;
+    
+    // Clear previous errors
+    setYearError('');
+    setSemesterError('');
+    
+    // Validate required fields
+    let hasErrors = false;
+    
+    if (!major.trim()) {
+      hasErrors = true;
+    }
+    
+    if (!currentYear || currentYear === '') {
+      setYearError('Please select your current year');
+      hasErrors = true;
+    }
+    
+    if (!currentSemester || currentSemester === '') {
+      setSemesterError('Please select your current semester');
+      hasErrors = true;
+    }
+    
+    if (hasErrors) return;
+    
     setSubmitted(true);
     setLoading(true);
 
@@ -104,7 +131,8 @@ function Welcome({
         minor: minor.trim() || undefined, 
         certificate: certificate.trim() || undefined,
         maxHours: maxHours[0],
-        currentYear
+        currentYear,
+        currentSemester
       });
     }, 1400);
   }
@@ -226,7 +254,7 @@ function Welcome({
               <div className="bg-white rounded-lg shadow-xl p-8 space-y-6 animate-in fade-in slide-in-from-top-2 duration-500">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="major-input">Enter your major</Label>
+                    <Label htmlFor="major-input">Enter your major *</Label>
                     <Input
                       id="major-input"
                       placeholder="e.g. Computer Engineering"
@@ -287,9 +315,15 @@ function Welcome({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="font-[Open_Sans]">Current Year</Label>
-                      <Select value={currentYear} onValueChange={setCurrentYear}>
-                        <SelectTrigger>
+                      <Label className="font-[Open_Sans]">Current Year *</Label>
+                      <Select 
+                        value={currentYear || undefined} 
+                        onValueChange={(value) => {
+                          setCurrentYear(value);
+                          if (yearError) setYearError('');
+                        }}
+                      >
+                        <SelectTrigger className={yearError ? 'border-red-500' : ''}>
                           <SelectValue placeholder="Select Year" />
                         </SelectTrigger>
                         <SelectContent>
@@ -299,6 +333,31 @@ function Welcome({
                           <SelectItem value="Senior">Senior</SelectItem>
                         </SelectContent>
                       </Select>
+                      {yearError && (
+                        <p className="text-sm text-red-500 font-[Open_Sans]">{yearError}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="font-[Open_Sans]">Current Semester *</Label>
+                      <Select 
+                        value={currentSemester || undefined} 
+                        onValueChange={(value) => {
+                          setCurrentSemester(value);
+                          if (semesterError) setSemesterError('');
+                        }}
+                      >
+                        <SelectTrigger className={semesterError ? 'border-red-500' : ''}>
+                          <SelectValue placeholder="Select Semester" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1st">1st Semester</SelectItem>
+                          <SelectItem value="2nd">2nd Semester</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {semesterError && (
+                        <p className="text-sm text-red-500 font-[Open_Sans]">{semesterError}</p>
+                      )}
                     </div>
                   </div>
                   
@@ -405,9 +464,15 @@ function Welcome({
                         </div>
 
                         <div className="space-y-2">
-                          <Label className="font-[Open_Sans]">Current Year</Label>
-                          <Select value={currentYear} onValueChange={setCurrentYear}>
-                            <SelectTrigger>
+                          <Label className="font-[Open_Sans]">Current Year *</Label>
+                          <Select 
+                            value={currentYear || undefined} 
+                            onValueChange={(value) => {
+                              setCurrentYear(value);
+                              if (yearError) setYearError('');
+                            }}
+                          >
+                            <SelectTrigger className={yearError ? 'border-red-500' : ''}>
                               <SelectValue placeholder="Select Year" />
                             </SelectTrigger>
                             <SelectContent>
@@ -417,6 +482,31 @@ function Welcome({
                               <SelectItem value="Senior">Senior</SelectItem>
                             </SelectContent>
                           </Select>
+                          {yearError && (
+                            <p className="text-sm text-red-500 font-[Open_Sans]">{yearError}</p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="font-[Open_Sans]">Current Semester *</Label>
+                          <Select 
+                            value={currentSemester || undefined} 
+                            onValueChange={(value) => {
+                              setCurrentSemester(value);
+                              if (semesterError) setSemesterError('');
+                            }}
+                          >
+                            <SelectTrigger className={semesterError ? 'border-red-500' : ''}>
+                              <SelectValue placeholder="Select Semester" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1st">1st Semester</SelectItem>
+                              <SelectItem value="2nd">2nd Semester</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {semesterError && (
+                            <p className="text-sm text-red-500 font-[Open_Sans]">{semesterError}</p>
+                          )}
                         </div>
                       </div>
                       

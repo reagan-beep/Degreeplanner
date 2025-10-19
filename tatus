@@ -1,0 +1,157 @@
+[1mdiff --git a/package-lock.json b/package-lock.json[m
+[1mindex 6844eee..d785c45 100644[m
+[1m--- a/package-lock.json[m
+[1m+++ b/package-lock.json[m
+[36m@@ -53,6 +53,8 @@[m
+                   },[m
+                   "devDependencies": {[m
+                         "@types/node": "^20.10.0",[m
+[32m+[m[32m                        "@types/react": "^19.2.2",[m
+[32m+[m[32m                        "@types/react-dom": "^19.2.2",[m
+                         "@vitejs/plugin-react-swc": "^3.10.2",[m
+                         "vite": "6.3.5"[m
+                   }[m
+[36m@@ -2487,6 +2489,26 @@[m
+                         "undici-types": "~6.21.0"[m
+                   }[m
+             },[m
+[32m+[m[32m            "node_modules/@types/react": {[m
+[32m+[m[32m                  "version": "19.2.2",[m
+[32m+[m[32m                  "resolved": "https://registry.npmjs.org/@types/react/-/react-19.2.2.tgz",[m
+[32m+[m[32m                  "integrity": "sha512-6mDvHUFSjyT2B2yeNx2nUgMxh9LtOWvkhIU3uePn2I2oyNymUAX1NIsdgviM4CH+JSrp2D2hsMvJOkxY+0wNRA==",[m
+[32m+[m[32m                  "devOptional": true,[m
+[32m+[m[32m                  "license": "MIT",[m
+[32m+[m[32m                  "dependencies": {[m
+[32m+[m[32m                        "csstype": "^3.0.2"[m
+[32m+[m[32m                  }[m
+[32m+[m[32m            },[m
+[32m+[m[32m            "node_modules/@types/react-dom": {[m
+[32m+[m[32m                  "version": "19.2.2",[m
+[32m+[m[32m                  "resolved": "https://registry.npmjs.org/@types/react-dom/-/react-dom-19.2.2.tgz",[m
+[32m+[m[32m                  "integrity": "sha512-9KQPoO6mZCi7jcIStSnlOWn2nEF3mNmyr3rIAsGnAbQKYbRLyqmeSc39EVgtxXVia+LMT8j3knZLAZAh+xLmrw==",[m
+[32m+[m[32m                  "devOptional": true,[m
+[32m+[m[32m                  "license": "MIT",[m
+[32m+[m[32m                  "peerDependencies": {[m
+[32m+[m[32m                        "@types/react": "^19.2.0"[m
+[32m+[m[32m                  }[m
+[32m+[m[32m            },[m
+             "node_modules/@vitejs/plugin-react-swc": {[m
+                   "version": "3.11.0",[m
+                   "resolved": "https://registry.npmjs.org/@vitejs/plugin-react-swc/-/plugin-react-swc-3.11.0.tgz",[m
+[1mdiff --git a/package.json b/package.json[m
+[1mindex 1b3da3d..1e02da5 100644[m
+[1m--- a/package.json[m
+[1m+++ b/package.json[m
+[36m@@ -1,59 +1,60 @@[m
+[31m-[m
+[31m-  {[m
+[32m+[m[32m{[m
+       "name": "Degree Planner",[m
+       "version": "0.1.0",[m
+       "private": true,[m
+       "dependencies": {[m
+[31m-          "@radix-ui/react-accordion": "^1.2.3",[m
+[31m-          "@radix-ui/react-alert-dialog": "^1.1.6",[m
+[31m-          "@radix-ui/react-aspect-ratio": "^1.1.2",[m
+[31m-          "@radix-ui/react-avatar": "^1.1.3",[m
+[31m-          "@radix-ui/react-checkbox": "^1.1.4",[m
+[31m-          "@radix-ui/react-collapsible": "^1.1.3",[m
+[31m-          "@radix-ui/react-context-menu": "^2.2.6",[m
+[31m-          "@radix-ui/react-dialog": "^1.1.6",[m
+[31m-          "@radix-ui/react-dropdown-menu": "^2.1.6",[m
+[31m-          "@radix-ui/react-hover-card": "^1.1.6",[m
+[31m-          "@radix-ui/react-label": "^2.1.2",[m
+[31m-          "@radix-ui/react-menubar": "^1.1.6",[m
+[31m-          "@radix-ui/react-navigation-menu": "^1.2.5",[m
+[31m-          "@radix-ui/react-popover": "^1.1.6",[m
+[31m-          "@radix-ui/react-progress": "^1.1.2",[m
+[31m-          "@radix-ui/react-radio-group": "^1.2.3",[m
+[31m-          "@radix-ui/react-scroll-area": "^1.2.3",[m
+[31m-          "@radix-ui/react-select": "^2.1.6",[m
+[31m-          "@radix-ui/react-separator": "^1.1.2",[m
+[31m-          "@radix-ui/react-slider": "^1.2.3",[m
+[31m-          "@radix-ui/react-slot": "^1.1.2",[m
+[31m-          "@radix-ui/react-switch": "^1.1.3",[m
+[31m-          "@radix-ui/react-tabs": "^1.1.3",[m
+[31m-          "@radix-ui/react-toggle": "^1.1.2",[m
+[31m-          "@radix-ui/react-toggle-group": "^1.1.2",[m
+[31m-          "@radix-ui/react-tooltip": "^1.1.8",[m
+[31m-          "class-variance-authority": "^0.7.1",[m
+[31m-          "clsx": "*",[m
+[31m-          "cmdk": "^1.1.1",[m
+[31m-          "embla-carousel-react": "^8.6.0",[m
+[31m-          "input-otp": "^1.4.2",[m
+[31m-          "lucide-react": "^0.487.0",[m
+[31m-          "next-themes": "^0.4.6",[m
+[31m-          "react": "^18.3.1",[m
+[31m-          "react-day-picker": "^8.10.1",[m
+[31m-          "react-dom": "^18.3.1",[m
+[31m-          "react-hook-form": "^7.55.0",[m
+[31m-          "react-resizable-panels": "^2.1.7",[m
+[31m-          "recharts": "^2.15.2",[m
+[31m-          "sonner": "^2.0.3",[m
+[31m-          "tailwind-merge": "*",[m
+[31m-          "vaul": "^1.1.2"[m
+[32m+[m[32m            "@radix-ui/react-accordion": "^1.2.3",[m
+[32m+[m[32m            "@radix-ui/react-alert-dialog": "^1.1.6",[m
+[32m+[m[32m            "@radix-ui/react-aspect-ratio": "^1.1.2",[m
+[32m+[m[32m            "@radix-ui/react-avatar": "^1.1.3",[m
+[32m+[m[32m            "@radix-ui/react-checkbox": "^1.1.4",[m
+[32m+[m[32m            "@radix-ui/react-collapsible": "^1.1.3",[m
+[32m+[m[32m            "@radix-ui/react-context-menu": "^2.2.6",[m
+[32m+[m[32m            "@radix-ui/react-dialog": "^1.1.6",[m
+[32m+[m[32m            "@radix-ui/react-dropdown-menu": "^2.1.6",[m
+[32m+[m[32m            "@radix-ui/react-hover-card": "^1.1.6",[m
+[32m+[m[32m            "@radix-ui/react-label": "^2.1.2",[m
+[32m+[m[32m            "@radix-ui/react-menubar": "^1.1.6",[m
+[32m+[m[32m            "@radix-ui/react-navigation-menu": "^1.2.5",[m
+[32m+[m[32m            "@radix-ui/react-popover": "^1.1.6",[m
+[32m+[m[32m            "@radix-ui/react-progress": "^1.1.2",[m
+[32m+[m[32m            "@radix-ui/react-radio-group": "^1.2.3",[m
+[32m+[m[32m            "@radix-ui/react-scroll-area": "^1.2.3",[m
+[32m+[m[32m            "@radix-ui/react-select": "^2.1.6",[m
+[32m+[m[32m            "@radix-ui/react-separator": "^1.1.2",[m
+[32m+[m[32m            "@radix-ui/react-slider": "^1.2.3",[m
+[32m+[m[32m            "@radix-ui/react-slot": "^1.1.2",[m
+[32m+[m[32m            "@radix-ui/react-switch": "^1.1.3",[m
+[32m+[m[32m            "@radix-ui/react-tabs": "^1.1.3",[m
+[32m+[m[32m            "@radix-ui/react-toggle": "^1.1.2",[m
+[32m+[m[32m            "@radix-ui/react-toggle-group": "^1.1.2",[m
+[32m+[m[32m            "@radix-ui/react-tooltip": "^1.1.8",[m
+[32m+[m[32m            "class-variance-authority": "^0.7.1",[m
+[32m+[m[32m            "clsx": "*",[m
+[32m+[m[32m            "cmdk": "^1.1.1",[m
+[32m+[m[32m            "embla-carousel-react": "^8.6.0",[m
+[32m+[m[32m            "input-otp": "^1.4.2",[m
+[32m+[m[32m            "lucide-react": "^0.487.0",[m
+[32m+[m[32m            "next-themes": "^0.4.6",[m
+[32m+[m[32m            "react": "^18.3.1",[m
+[32m+[m[32m            "react-day-picker": "^8.10.1",[m
+[32m+[m[32m            "react-dom": "^18.3.1",[m
+[32m+[m[32m            "react-hook-form": "^7.55.0",[m
+[32m+[m[32m            "react-resizable-panels": "^2.1.7",[m
+[32m+[m[32m            "recharts": "^2.15.2",[m
+[32m+[m[32m            "sonner": "^2.0.3",[m
+[32m+[m[32m            "tailwind-merge": "*",[m
+[32m+[m[32m            "vaul": "^1.1.2"[m
+       },[m
+       "devDependencies": {[m
+[31m-          "@types/node": "^20.10.0",[m
+[31m-          "@vitejs/plugin-react-swc": "^3.10.2",[m
+[31m-          "vite": "6.3.5"[m
+[32m+[m[32m            "@types/node": "^20.10.0",[m
+[32m+[m[32m            "@types/react": "^19.2.2",[m
+[32m+[m[32m            "@types/react-dom": "^19.2.2",[m
+[32m+[m[32m            "@vitejs/plugin-react-swc": "^3.10.2",[m
+[32m+[m[32m            "vite": "6.3.5"[m
+       },[m
+       "scripts": {[m
+[31m-          "dev": "vite",[m
+[31m-          "build": "vite build"[m
+[32m+[m[32m            "dev": "vite",[m
+[32m+[m[32m            "build": "vite build"[m
+       }[m
+[31m-  }[m
+\ No newline at end of file[m
+[32m+[m[32m}[m
+[1mdiff 
