@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
+import { Checkbox } from './ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ArrowLeft, GripVertical, Plus, X, Calendar, BookOpen, FileText, History, SlidersHorizontal } from 'lucide-react';
 import CourseList from './CourseList';
@@ -104,6 +105,27 @@ const convertCpenDataToSemesters = (): Semester[] => {
 
 const initialSemesters: Semester[] = convertCpenDataToSemesters();
 
+// UCC elective options
+const uccOptions = [
+  { code: "ARTS 1301", name: "Art Appreciation", hours: 3 },
+  { code: "ARTS 1303", name: "Art History Survey I", hours: 3 },
+  { code: "ARTS 1304", name: "Art History Survey II", hours: 3 },
+  { code: "DANC 2303", name: "Dance Appreciation", hours: 3 },
+  { code: "ENGL 2311", name: "Technical and Business Writing", hours: 3 },
+  { code: "ENGL 2331", name: "World Literature I", hours: 3 },
+  { code: "ENGL 2332", name: "World Literature II", hours: 3 },
+  { code: "ENGL 2333", name: "Literature of Diverse Cultures", hours: 3 },
+  { code: "MUSC 2303", name: "Music Appreciation", hours: 3 },
+  { code: "MUSC 2306", name: "Music Literature", hours: 3 },
+  { code: "PHIL 2303", name: "Introduction to Logic", hours: 3 },
+  { code: "PHIL 2311", name: "Introduction to Philosophy", hours: 3 },
+  { code: "PHIL 2316", name: "Philosophy and Current Issues", hours: 3 },
+  { code: "PHIL 2317", name: "Environmental Ethics", hours: 3 },
+  { code: "SPCH 2311", name: "Introduction to Speech Communication", hours: 3 },
+  { code: "SPCH 2321", name: "Business and Professional Communication", hours: 3 },
+  { code: "THEA 2303", name: "Theatre Appreciation", hours: 3 }
+];
+
 function DegreePlanner({ major, onBack }: DegreePlannerProps) {
   const [semesters, setSemesters] = useState<Semester[]>(initialSemesters);
   const [maxHours, setMaxHours] = useState([16]);
@@ -120,12 +142,41 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     return saved ? new Set(JSON.parse(saved)) : new Set();
   });
 
+  // State for selected UCC courses
+  const [selectedUccCourses, setSelectedUccCourses] = useState<{ [key: string]: string }>(() => {
+    const saved = localStorage.getItem('selectedUccCourses');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  // State for TAMU courses (courses completed from degree plan)
+  const [tamuCourses, setTamuCourses] = useState<Array<{code: string, timestamp: number}>>(() => {
+    const saved = localStorage.getItem('tamuCourses');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const getTotalHours = (courses: Course[]) => {
     return courses.reduce((sum, course) => sum + course.hours, 0);
   };
 
   const getTotalCredits = () => {
     return semesters.reduce((sum, semester) => sum + getTotalHours(semester.courses), 0);
+  };
+
+  const getCompletedCredits = () => {
+    let completedCredits = 0;
+    semesters.forEach(semester => {
+      semester.courses.forEach(course => {
+        // Check if this course is completed (checked)
+        const courseCode = course.code === "UCC Elective" && selectedUccCourses[course.id] 
+          ? selectedUccCourses[course.id] 
+          : course.code;
+        
+        if (checkedCourses.has(courseCode)) {
+          completedCredits += course.hours;
+        }
+      });
+    });
+    return completedCredits;
   };
 
   const removeCourse = (semesterId: string, courseId: string) => {
@@ -137,11 +188,25 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     ));
   };
 
+  const removeSemester = (semesterId: string) => {
+    console.log('Remove semester clicked:', semesterId);
+    setSemesters(semesters.filter(semester => semester.id !== semesterId));
+  };
+
   const handleCourseCompleted = (course: string) => {
     const newCompletedCourses = [...completedCourses, course];
     setCompletedCourses(newCompletedCourses);
     const newCheckedCourses = new Set([...checkedCourses, course]);
     setCheckedCourses(newCheckedCourses);
+    
+    // Add to TAMU courses if not already there
+    const courseExists = tamuCourses.some(tamuCourse => tamuCourse.code === course);
+    if (!courseExists) {
+      const newTamuCourses = [...tamuCourses, { code: course, timestamp: Date.now() }];
+      setTamuCourses(newTamuCourses);
+      localStorage.setItem('tamuCourses', JSON.stringify(newTamuCourses));
+    }
+    
     localStorage.setItem('completedCourses', JSON.stringify(newCompletedCourses));
     localStorage.setItem('checkedCourses', JSON.stringify([...newCheckedCourses]));
   };
@@ -152,8 +217,37 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     const newCheckedCourses = new Set(checkedCourses);
     newCheckedCourses.delete(course);
     setCheckedCourses(newCheckedCourses);
+    
+    // Remove from TAMU courses
+    const newTamuCourses = tamuCourses.filter(tamuCourse => tamuCourse.code !== course);
+    setTamuCourses(newTamuCourses);
+    localStorage.setItem('tamuCourses', JSON.stringify(newTamuCourses));
+    
     localStorage.setItem('completedCourses', JSON.stringify(newCompletedCourses));
     localStorage.setItem('checkedCourses', JSON.stringify([...newCheckedCourses]));
+  };
+
+  const toggleCourseCompletion = (course: string) => {
+    if (checkedCourses.has(course)) {
+      handleCourseUnchecked(course);
+    } else {
+      handleCourseCompleted(course);
+    }
+  };
+
+  const handleUccSelection = (courseId: string, selectedUccCode: string) => {
+    if (selectedUccCode === "reset") {
+      // Reset to default UCC Elective
+      const newSelectedUcc = { ...selectedUccCourses };
+      delete newSelectedUcc[courseId];
+      setSelectedUccCourses(newSelectedUcc);
+      localStorage.setItem('selectedUccCourses', JSON.stringify(newSelectedUcc));
+    } else {
+      // Update with selected UCC course
+      const newSelectedUcc = { ...selectedUccCourses, [courseId]: selectedUccCode };
+      setSelectedUccCourses(newSelectedUcc);
+      localStorage.setItem('selectedUccCourses', JSON.stringify(newSelectedUcc));
+    }
   };
 
   const getSemesterLabel = (semesterName: string) => {
@@ -242,15 +336,25 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-[Passion_One] text-gray-800">Progress Overview</h2>
-                <Badge variant="secondary">
-                  {getTotalCredits()} / 120 Credits
-                </Badge>
+                <div className="flex items-center gap-3">
+                  <Badge variant="secondary">
+                    {getCompletedCredits()} / 120 Credits Completed
+                  </Badge>
+                  <Badge variant="outline">
+                    {getTotalCredits()} Total Credits Planned
+                  </Badge>
+                </div>
               </div>
               <div className="w-full bg-secondary rounded-full h-3">
                 <div 
                   className="bg-gradient-to-r from-blue-600 to-purple-600 h-3 rounded-full transition-all"
-                  style={{ width: `${(getTotalCredits() / 120) * 100}%` }}
+                  style={{ width: `${Math.min((getCompletedCredits() / 120) * 100, 100)}%` }}
                 ></div>
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                <span>0 credits</span>
+                <span>{Math.round((getCompletedCredits() / 120) * 100)}% Complete</span>
+                <span>120 credits</span>
               </div>
             </div>
 
@@ -262,7 +366,18 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                       <CardTitle className="font-[Passion_One]">
                         {getSemesterLabel(semester.name)}
                       </CardTitle>
-                      <Badge>{getTotalHours(semester.courses)} hours</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge>{getTotalHours(semester.courses)} hours</Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSemester(semester.id)}
+                          className="opacity-60 hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
+                          title="Delete Semester"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2">
@@ -272,16 +387,58 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                         className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors group"
                       >
                         <GripVertical className="h-4 w-4 text-muted-foreground" />
+                        <Checkbox
+                          checked={checkedCourses.has(course.code === "UCC Elective" && selectedUccCourses[course.id] ? selectedUccCourses[course.id] : course.code)}
+                          onCheckedChange={() => toggleCourseCompletion(course.code === "UCC Elective" && selectedUccCourses[course.id] ? selectedUccCourses[course.id] : course.code)}
+                          className="h-4 w-4"
+                        />
                         <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium font-[Open_Sans]">{course.code}</span>
-                            {course.name && (
-                              <>
-                                <span className="text-xs text-muted-foreground">•</span>
-                                <span className="text-sm font-[Open_Sans]">{course.name}</span>
-                              </>
-                            )}
-                          </div>
+                          {course.code === "UCC Elective" ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium font-[Open_Sans]">
+                                  {selectedUccCourses[course.id] || "UCC Elective"}
+                                </span>
+                                {course.name && (
+                                  <>
+                                    <span className="text-xs text-muted-foreground">•</span>
+                                    <span className="text-sm font-[Open_Sans]">
+                                      {selectedUccCourses[course.id] 
+                                        ? uccOptions.find(opt => opt.code === selectedUccCourses[course.id])?.name
+                                        : course.name
+                                      }
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                              <Select
+                                value={selectedUccCourses[course.id] || ""}
+                                onValueChange={(value: string) => handleUccSelection(course.id, value)}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select UCC Course" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="reset">Reset to UCC Elective</SelectItem>
+                                  {uccOptions.map((option) => (
+                                    <SelectItem key={option.code} value={option.code}>
+                                      {option.code} - {option.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium font-[Open_Sans]">{course.code}</span>
+                              {course.name && (
+                                <>
+                                  <span className="text-xs text-muted-foreground">•</span>
+                                  <span className="text-sm font-[Open_Sans]">{course.name}</span>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <Badge variant="outline">{course.hours}h</Badge>
                         <Button
@@ -365,7 +522,11 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
           </TabsContent>
 
           <TabsContent value="previous" className="mt-6">
-            <PreviousCourses major={major} onBack={() => {}} completedCourses={completedCourses} />
+            <PreviousCourses 
+              major={major} 
+              onBack={() => {}} 
+              initialTamuCourses={tamuCourses}
+            />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">

@@ -18,7 +18,7 @@ interface PageData {
   major: string;
   minor?: string;
   certificate?: string;
-  maxHours?: string;
+  maxHours?: number;
   currentYear?: string;
 }
 
@@ -29,6 +29,8 @@ function App() {
   const [lastMajor, setLastMajor] = useState("");
   const [lastMinor, setLastMinor] = useState("");
   const [lastCertificate, setLastCertificate] = useState("");
+  const [lastMaxHours, setLastMaxHours] = useState<number>(16);
+  const [lastCurrentYear, setLastCurrentYear] = useState<string>("Freshman");
 
   const handleBack = (toHome = false) => {
     if (toHome) {
@@ -44,6 +46,8 @@ function App() {
     setLastMajor(data.major);
     setLastMinor(data.minor || "");
     setLastCertificate(data.certificate || "");
+    setLastMaxHours(data.maxHours || 16);
+    setLastCurrentYear(data.currentYear || "Freshman");
     setPage("semester");
   };
 
@@ -51,6 +55,8 @@ function App() {
     setLastMajor(data.major);
     setLastMinor(data.minor || "");
     setLastCertificate(data.certificate || "");
+    setLastMaxHours(data.maxHours || 16);
+    setLastCurrentYear(data.currentYear || "Freshman");
     setPage("courses");
   };
 
@@ -58,6 +64,8 @@ function App() {
     setLastMajor(data.major);
     setLastMinor(data.minor || "");
     setLastCertificate(data.certificate || "");
+    setLastMaxHours(data.maxHours || 16);
+    setLastCurrentYear(data.currentYear || "Freshman");
     setPage("template");
   };
 
@@ -65,6 +73,8 @@ function App() {
     setLastMajor(data.major);
     setLastMinor(data.minor || "");
     setLastCertificate(data.certificate || "");
+    setLastMaxHours(data.maxHours || 16);
+    setLastCurrentYear(data.currentYear || "Freshman");
     setPage("previous");
   };
 
@@ -83,7 +93,10 @@ function App() {
       )}
 
       {page === "semester" && (
-        <DegreePlanner major={lastMajor} onBack={handleBack} />
+        <DegreePlanner 
+          major={lastMajor} 
+          onBack={handleBack}
+        />
       )}
 
       {page === "courses" && (
