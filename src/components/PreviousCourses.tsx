@@ -4,10 +4,18 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Checkbox } from './ui/checkbox';
 import { X, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Course {
+  id: string;
+  code: string;
+  name: string;
+  hours: number;
+}
+
+interface TamuCourse {
   code: string;
   timestamp: number;
 }
@@ -18,14 +26,23 @@ interface TransferCourse {
   timestamp: number;
 }
 
+interface Semester {
+  id: string;
+  name: string;
+  courses: Course[];
+}
+
 interface PreviousCoursesProps {
   major: string;
   onBack: (toHome?: boolean) => void;
-  completedCourses?: string[];
+  completedCourses?: Semester[];
+  checkedCourses?: Set<string>;
+  onToggleCourseCompletion?: (courseId: string) => void;
+  initialTamuCourses?: TamuCourse[];
 }
 
-function PreviousCourses({ major, onBack, completedCourses = [] }: PreviousCoursesProps) {
-  const [tamuCourses, setTamuCourses] = useState<Course[]>([]);
+function PreviousCourses({ major, onBack, completedCourses = [], checkedCourses = new Set(), onToggleCourseCompletion, initialTamuCourses = [] }: PreviousCoursesProps) {
+  const [tamuCourses, setTamuCourses] = useState<TamuCourse[]>(initialTamuCourses);
   const [transferCourses, setTransferCourses] = useState<TransferCourse[]>([]);
   const [newTamuCourse, setNewTamuCourse] = useState({ code: '' });
   const [newTransferCourse, setNewTransferCourse] = useState({ code: '', hours: '' });
@@ -51,12 +68,12 @@ function PreviousCourses({ major, onBack, completedCourses = [] }: PreviousCours
   };
 
   const handleRemoveTamuCourse = (index: number) => {
-    setTamuCourses(tamuCourses.filter((_, i) => i !== index));
+    setTamuCourses(tamuCourses.filter((_: TamuCourse, i: number) => i !== index));
     toast.info('Course removed');
   };
 
   const handleRemoveTransferCourse = (index: number) => {
-    setTransferCourses(transferCourses.filter((_, i) => i !== index));
+    setTransferCourses(transferCourses.filter((_: TransferCourse, i: number) => i !== index));
     toast.info('Course removed');
   };
 
@@ -82,28 +99,42 @@ function PreviousCourses({ major, onBack, completedCourses = [] }: PreviousCours
 
         {/* Completed Courses from Template */}
         {completedCourses.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Completed Courses (from Template)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {completedCourses.map((course, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-green-800">{course}</span>
-                    </div>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      Completed
-                    </Badge>
+          <div className="space-y-4">
+            {completedCourses.map((semester) => (
+              <Card key={semester.id}>
+                <CardHeader>
+                  <CardTitle>Completed Courses - {semester.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {semester.courses.map((course) => (
+                      <div
+                        key={course.id}
+                        className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={checkedCourses.has(course.id)}
+                            onCheckedChange={() => onToggleCourseCompletion?.(course.id)}
+                          />
+                          <div>
+                            <span className="font-medium text-green-800">{course.code}</span>
+                            <p className="text-sm text-green-600">{course.name}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-green-700">{course.hours} hrs</span>
+                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                            Completed
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
 
         <div className="grid md:grid-cols-2 gap-6">

@@ -135,6 +135,17 @@
     font-feature-settings: var(--default-font-feature-settings, normal);
     font-variation-settings: var(--default-font-variation-settings, normal);
     -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scroll animations */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  .parallax-scroll {
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 
   body {
