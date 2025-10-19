@@ -17,8 +17,7 @@ type WelcomeState = "initial" | "options";
 interface PageData {
   major: string;
   minor?: string;
-  certificate?: string;
-  maxHours?: string;
+  maxHours?: number;
   currentYear?: string;
 }
 
@@ -28,7 +27,6 @@ function App() {
     useState<WelcomeState>("initial");
   const [lastMajor, setLastMajor] = useState("");
   const [lastMinor, setLastMinor] = useState("");
-  const [lastCertificate, setLastCertificate] = useState("");
 
   const handleBack = (toHome = false) => {
     if (toHome) {
@@ -43,28 +41,24 @@ function App() {
   const handleGoToSemester = (data: PageData) => {
     setLastMajor(data.major);
     setLastMinor(data.minor || "");
-    setLastCertificate(data.certificate || "");
     setPage("semester");
   };
 
   const handleGoToCourse = (data: PageData) => {
     setLastMajor(data.major);
     setLastMinor(data.minor || "");
-    setLastCertificate(data.certificate || "");
     setPage("courses");
   };
 
   const handleGoToTemplate = (data: PageData) => {
     setLastMajor(data.major);
     setLastMinor(data.minor || "");
-    setLastCertificate(data.certificate || "");
     setPage("template");
   };
 
   const handleGoToPrevious = (data: PageData) => {
     setLastMajor(data.major);
     setLastMinor(data.minor || "");
-    setLastCertificate(data.certificate || "");
     setPage("previous");
   };
 
@@ -83,11 +77,11 @@ function App() {
       )}
 
       {page === "semester" && (
-        <DegreePlanner major={lastMajor} minor={lastMinor} certificate={lastCertificate} onBack={handleBack} />
+        <DegreePlanner major={lastMajor} minor={lastMinor} onBack={handleBack} />
       )}
 
       {page === "courses" && (
-        <CourseList major={lastMajor} minor={lastMinor} certificate={lastCertificate} onBack={handleBack} />
+        <CourseList major={lastMajor} minor={lastMinor} onBack={handleBack} />
       )}
 
       {page === "template" && (

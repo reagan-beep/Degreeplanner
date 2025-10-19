@@ -1,0 +1,79 @@
+{
+  "Computer Engineering Area Electives": {
+    "Overview": {
+      "Depth Tracks Requirement": "Students are required to satisfy 2 depth tracks, with each track requiring at least 2 courses from its list.",
+      "Total Area Electives": "Consequently, four of the area elective electives are occupied by depth requirements. The fifth course can be from the sequence list or any approved 300/400 level course in CSCE or ECEN.",
+      "Course Usage Rule": "A few courses are in multiple tracks; however, each course can only be used in one place on your degree plan (i.e., you cannot use the course in two places).",
+      "Disclaimer": "Depth tracks are subject to change. Consult your advising office for the current list."
+    },
+    "Depth Tracks": [
+      {
+        "Track Name": "Communications and Networks",
+        "Courses": [
+          {"Course": "CSCE 463", "Name": "Computer Networks", "Credits": 3},
+          {"Course": "CSCE 464", "Name": "Wireless and Mobile Systems", "Credits": 3},
+          {"Course": "CSCE 465", "Name": "Computer and Network Security", "Credits": 3},
+          {"Course": "ECEN 424", "Name": "Fundamentals of Networking", "Credits": 3},
+          {"Course": "ECEN 434", "Name": "Optimization for Electrical and Computer Engineering", "Credits": 3},
+          {"Course": "ECEN 455", "Name": "Digital Communications", "Credits": 4},
+          {"Course": "ECEN 478", "Name": "Wireless Communications", "Credits": 3},
+          {"Course": "MATH 470", "Name": "Comm. & Cryptography", "Credits": 3}
+        ]
+      },
+      {
+        "Track Name": "VLSI",
+        "Courses": [
+          {"Course": "ECEN 468", "Name": "Advanced Logic Design", "Credits": 4},
+          {"Course": "ECEN 474", "Name": "VLSI Circuit Design", "Credits": 4},
+          {"Course": "ECEN 475", "Name": "Intro. to VLSI Sys. Design", "Credits": 4}
+        ]
+      },
+      {
+        "Track Name": "Software Systems",
+        "Courses": [
+          {"Course": "CSCE 314", "Name": "Programming Languages", "Credits": 3},
+          {"Course": "ECEN 326", "Name": "Electronic Circuits", "Credits": 4},
+          {"Course": "CSCE 410", "Name": "Advanced OS", "Credits": 3},
+          {"Course": "CSCE 411", "Name": "Design and Analysis of Algorithms", "Credits": 3},
+          {"Course": "CSCE 431", "Name": "Software Engineering", "Credits": 3},
+          {"Course": "CSCE 434", "Name": "Compiler Design", "Credits": 3},
+          {"Course": "CSCE 435", "Name": "Parallel Computing", "Credits": 3},
+          {"Course": "CSCE 442", "Name": "Scientific Programming", "Credits": 3},
+          {"Course": "CSCE 465", "Name": "Computer and Network Security", "Credits": 3}
+        ]
+      },
+      {
+        "Track Name": "Signal/Image Processing & Graphics",
+        "Courses": [
+          {"Course": "ECEN 434", "Name": "Optimization for Electrical and Computer Engineering", "Credits": 3},
+          {"Course": "CSCE 441", "Name": "Computer Graphics", "Credits": 3},
+          {"Course": "CSCE 443", "Name": "Game Development", "Credits": 3},
+          {"Course": "ECEN 444", "Name": "Digital Signal Processing", "Credits": 3},
+          {"Course": "ECEN 447", "Name": "Digital Image Processing", "Credits": 4},
+          {"Course": "ECEN 448", "Name": "Real time DSP", "Credits": 3}
+        ]
+      },
+      {
+        "Track Name": "Robotics/Embedded Systems",
+        "Courses": [
+          {"Course": "CSCE 420", "Name": "Artificial Intelligence", "Credits": 3},
+          {"Course": "CSCE 452", "Name": "Robotics", "Credits": 3},
+          {"Course": "CSCE 456", "Name": "Real-time Computing", "Credits": 4},
+          {"Course": "ECEN 420", "Name": "Linear Control systems", "Credits": 3},
+          {"Course": "ECEN 421", "Name": "Digital Control Systems", "Credits": 3}
+        ]
+      },
+      {
+        "Track Name": "Information",
+        "Courses": [
+          {"Course": "CSCE 310", "Name": "Database systems", "Credits": 3},
+          {"Course": "CSCE 436", "Name": "Computer Human Interaction", "Credits": 3},
+          {"Course": "CSCE 444", "Name": "Structures of Interactive Info.", "Credits": 3},
+          {"Course": "CSCE 470", "Name": "Information Storage & Retrieval", "Credits": 3},
+          {"Course": "CSCE 438", "Name": "Distributed Objects", "Credits": 3},
+          {"Course": "ECEN 455", "Name": "Digital Communications", "Credits": 3}
+        ]
+      }
+    ]
+  }
+}

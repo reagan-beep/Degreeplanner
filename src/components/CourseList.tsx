@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { ArrowLeft, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import cpenData from '../data/ce_courses.json';
 import mathMinorData from '../data/math_minor_courses.json';
@@ -20,7 +20,6 @@ interface Course {
 interface CourseListProps {
   major: string;
   minor?: string;
-  certificate?: string;
   onBack: (toHome?: boolean) => void;
 }
 
@@ -55,7 +54,7 @@ const convertMathMinorToCourses = (): Course[] => {
   const mathCourses = mathMinorData["Math Minor"];
   return mathCourses.map((course, index) => {
     let courseCode = course.course;
-    let courseName = course.name;
+    let courseName: string | string[] = course.name;
     
     if (course.alternatives && course.alternatives.length > 0) {
       // Use the first alternative as the main course
@@ -78,7 +77,7 @@ const convertMathMinorToCourses = (): Course[] => {
 const cpenCourses = convertCpenToCourses();
 const mathMinorCourses = convertMathMinorToCourses();
 
-function CourseList({ major, minor, certificate, onBack }: CourseListProps) {
+function CourseList({ major, minor, onBack }: CourseListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
 
@@ -109,31 +108,8 @@ function CourseList({ major, minor, certificate, onBack }: CourseListProps) {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 relative">
-      {/* Logo in top left corner */}
-      <div className="absolute top-6 left-6 z-10">
-        <button 
-          onClick={() => onBack(true)}
-          className="text-3xl tracking-tight text-[rgba(85,0,0,0.98)] font-[Passion_One] font-bold italic hover:opacity-80 transition-opacity"
-        >
-          How-De-gree
-        </button>
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => onBack()} className="font-[Open_Sans]">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <div className="text-center flex-1">
-            <h1 className="text-4xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-              Course Catalog
-            </h1>
-            <p className="text-muted-foreground">{major}</p>
-          </div>
-          <div className="w-24"></div>
-        </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -14,6 +14,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import cpenData from '../data/ce_courses.json';
 import coreCurriculumData from '../data/core_curriculum.json';
+import mathMinorData from '../data/math_minor_courses.json';
+import areaElectivesData from '../data/area_cpen.json';
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCorners,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import {
+  CSS,
+} from '@dnd-kit/utilities';
 
 interface Course {
   code: string;
@@ -28,8 +48,472 @@ interface Semester {
   courses: Course[];
 }
 
+// Draggable Course Component
+interface DraggableCourseProps {
+  course: Course;
+  semesterId: string;
+  checkedCourses: Set<string>;
+  selectedElectiveType: { [key: string]: string };
+  selectedUccCourses: { [key: string]: string };
+  selectedUccCategory: { [key: string]: string };
+  minorDropdownSelections: { [key: string]: string };
+  selectedAreaElectives: { [key: string]: string };
+  selectedAreaTracks: { [key: string]: string };
+  selectedMinorRequirement: { [key: string]: string };
+  onToggleCourseCompletion: (course: string) => void;
+  onRemoveCourse: (semesterId: string, courseId: string) => void;
+  onUccCategorySelection: (courseId: string, selectedCategory: string) => void;
+  onUccSelection: (courseId: string, selectedUccCode: string) => void;
+  onMinorCourseSelection: (requirementId: string, selectedCourseCode: string) => void;
+  onMinorDropdownSelection: (requirementId: string, selectedCourseCode: string) => void;
+  onElectiveTypeSelection: (semesterId: string, electiveType: string) => void;
+  onAreaTrackSelection: (courseId: string, selectedTrack: string) => void;
+  onAreaElectiveSelection: (courseId: string, selectedCourseCode: string) => void;
+  getRemainingCoursesInCategory: (categoryName: string, completedCourses: string[]) => any[];
+  getUccCategories: (completedCourses: string[]) => any[];
+  completedCourses: string[];
+}
+
+function DraggableCourse({
+  course,
+  semesterId,
+  checkedCourses,
+  selectedElectiveType,
+  selectedUccCourses,
+  selectedUccCategory,
+  minorDropdownSelections,
+  selectedAreaElectives,
+  selectedAreaTracks,
+  selectedMinorRequirement,
+  onToggleCourseCompletion,
+  onRemoveCourse,
+  onUccCategorySelection,
+  onUccSelection,
+  onMinorCourseSelection,
+  onMinorDropdownSelection,
+  onElectiveTypeSelection,
+  onAreaTrackSelection,
+  onAreaElectiveSelection,
+  getRemainingCoursesInCategory,
+  getUccCategories,
+  completedCourses,
+}: DraggableCourseProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: course.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors group"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing"
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <Checkbox
+        checked={checkedCourses.has(
+          course.code === "UCC Elective" 
+            ? (selectedElectiveType[course.id] === "UCC" && selectedUccCourses[course.id] 
+                ? selectedUccCourses[course.id] 
+                : selectedElectiveType[course.id] === "Minor" && minorDropdownSelections["req1"]
+                ? minorDropdownSelections["req1"]
+                : selectedElectiveType[course.id] === "Area Emphasis" && selectedAreaElectives[course.id]
+                ? selectedAreaElectives[course.id]
+                : course.code)
+            : course.code
+        )}
+        onCheckedChange={() => {
+          const courseCode = course.code === "UCC Elective" 
+            ? (selectedElectiveType[course.id] === "UCC" && selectedUccCourses[course.id] 
+                ? selectedUccCourses[course.id] 
+                : selectedElectiveType[course.id] === "Minor" && minorDropdownSelections["req1"]
+                ? minorDropdownSelections["req1"]
+                : selectedElectiveType[course.id] === "Area Emphasis" && selectedAreaElectives[course.id]
+                ? selectedAreaElectives[course.id]
+                : course.code)
+            : course.code;
+          onToggleCourseCompletion(courseCode);
+        }}
+        className="h-4 w-4"
+      />
+      <div className="flex-1">
+        {course.code === "UCC Elective" ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="font-medium font-[Open_Sans]">
+                {selectedElectiveType[course.id] === "UCC" && selectedUccCourses[course.id] 
+                  ? selectedUccCourses[course.id] 
+                  : selectedElectiveType[course.id] === "Minor" && minorDropdownSelections["req1"]
+                  ? minorDropdownSelections["req1"]
+                  : selectedElectiveType[course.id] === "Area Emphasis" && selectedAreaElectives[course.id]
+                  ? selectedAreaElectives[course.id]
+                  : selectedElectiveType[course.id] === "Area Emphasis"
+                  ? "Area Elective"
+                  : "Elective"}
+              </span>
+              {course.name && (
+                <>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <span className="text-sm font-[Open_Sans]">
+                    {selectedElectiveType[course.id] === "UCC" && selectedUccCourses[course.id]
+                      ? getRemainingCoursesInCategory(selectedUccCategory[course.id] || "", completedCourses).find(opt => opt.code === selectedUccCourses[course.id])?.name
+                      : selectedElectiveType[course.id] === "Minor" && minorDropdownSelections["req1"]
+                      ? "Math Minor Course"
+                      : selectedElectiveType[course.id] === "Area Emphasis" && selectedAreaElectives[course.id]
+                      ? (() => {
+                          const selectedCourse = areaElectivesData["Computer Engineering Area Electives"]["Depth Tracks"]
+                            .flatMap(track => track.Courses)
+                            .find(c => c.Course === selectedAreaElectives[course.id]);
+                          return selectedCourse ? selectedCourse.Name : "Area Elective";
+                        })()
+                      : selectedElectiveType[course.id] === "Area Emphasis"
+                      ? "Area Elective"
+                      : course.name}
+                  </span>
+                </>
+              )}
+            </div>
+            
+            {/* Elective Type Selection */}
+            <div className="space-y-1">
+              <Label className="text-xs font-medium text-muted-foreground">Select Elective Type:</Label>
+              <Select
+                value={selectedElectiveType[course.id] || ""}
+                onValueChange={(value: string) => onElectiveTypeSelection(course.id, value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Elective:" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reset">Reset selection</SelectItem>
+                  <SelectItem value="UCC">UCC (University Core Curriculum)</SelectItem>
+                  <SelectItem value="Minor">Minor Course</SelectItem>
+                  <SelectItem value="Area Emphasis">Area Emphasis</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* UCC Selection - Only show if UCC is selected */}
+            {selectedElectiveType[course.id] === "UCC" && (
+              <>
+                {/* Category Selection */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium text-muted-foreground">Select UCC Category:</Label>
+                  <Select
+                    value={selectedUccCategory[course.id] || ""}
+                    onValueChange={(value: string) => onUccCategorySelection(course.id, value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Choose UCC Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="reset">Reset category</SelectItem>
+                      {getUccCategories(completedCourses).map((category) => (
+                        <SelectItem key={category.code} value={category.name}>
+                          {category.name} ({category.completed}/{category.required} credits)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Course Selection - Only show if category is selected */}
+                {selectedUccCategory[course.id] && (
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-muted-foreground">Select Course:</Label>
+                    <Select
+                      value={selectedUccCourses[course.id] || ""}
+                      onValueChange={(value: string) => onUccSelection(course.id, value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Choose specific course" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="reset">Reset course selection</SelectItem>
+                        {getRemainingCoursesInCategory(selectedUccCategory[course.id], completedCourses).map((option) => (
+                          <SelectItem key={option.code} value={option.code}>
+                            {option.code} - {option.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Minor Selection - Only show if Minor is selected */}
+            {selectedElectiveType[course.id] === "Minor" && (
+              <div className="space-y-4">
+                {/* Requirement 1: Select one from MATH 148, 152, 172 (4 hours) */}
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-blue-800">1) Select one from the following (4 credit hours)</h4>
+                    <Badge variant="outline">4 hours required</Badge>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 p-2 bg-white rounded border">
+                      <Checkbox
+                        checked={selectedMinorRequirement[course.id] === "req1" && checkedCourses.has(minorDropdownSelections["req1"] || "")}
+                        onCheckedChange={() => {
+                          if (selectedMinorRequirement[course.id] === "req1") {
+                            // Uncheck current selection
+                            const selectedCourse = minorDropdownSelections["req1"];
+                            if (selectedCourse) {
+                              onToggleCourseCompletion(selectedCourse);
+                            }
+                            const newSelectedRequirement = { ...selectedMinorRequirement };
+                            delete newSelectedRequirement[course.id];
+                            // Note: This would need to be handled by parent component
+                          } else {
+                            // Check this requirement and uncheck others
+                            // Note: This would need to be handled by parent component
+                          }
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <div className="flex-1">
+                        <Select
+                          value={minorDropdownSelections["req1"] || ""}
+                          onValueChange={(value) => onMinorDropdownSelection("req1", value)}
+                          disabled={selectedMinorRequirement[course.id] !== "req1"}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Choose a course" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="reset">Reset selection</SelectItem>
+                            <SelectItem value="MATH 148">MATH 148 - Calculus II for Biological Sciences</SelectItem>
+                            <SelectItem value="MATH 152">MATH 152 - Engineering Mathematics II (Major Course)</SelectItem>
+                            <SelectItem value="MATH 172">MATH 172 - Calculus II</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Requirement 2: Select three from MATH 221, 251, 253, 300-499 (9 hours) */}
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-blue-800">2) Select three from the following (9 credit hours)</h4>
+                    <Badge variant="outline">9 hours required</Badge>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((num) => (
+                      <div key={num} className="flex items-center gap-3 p-2 bg-white rounded border">
+                        <Checkbox
+                          checked={selectedMinorRequirement[course.id] === `req2_${num}` && checkedCourses.has(minorDropdownSelections[`req2_${num}`] || "")}
+                          onCheckedChange={() => {
+                            if (selectedMinorRequirement[course.id] === `req2_${num}`) {
+                              // Uncheck current selection
+                              const selectedCourse = minorDropdownSelections[`req2_${num}`];
+                              if (selectedCourse) {
+                                onToggleCourseCompletion(selectedCourse);
+                              }
+                              // Note: This would need to be handled by parent component
+                            } else {
+                              // Check this requirement and uncheck others
+                              // Note: This would need to be handled by parent component
+                            }
+                          }}
+                          className="h-4 w-4"
+                        />
+                        <div className="flex-1">
+                          <Select
+                            value={minorDropdownSelections[`req2_${num}`] || ""}
+                            onValueChange={(value) => onMinorDropdownSelection(`req2_${num}`, value)}
+                            disabled={selectedMinorRequirement[course.id] !== `req2_${num}`}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder={`Course ${num}`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="reset">Reset selection</SelectItem>
+                              <SelectItem value="MATH 221">MATH 221 - Several Variable Calculus</SelectItem>
+                              <SelectItem value="MATH 251">MATH 251 - Engineering Mathematics III (Major Course)</SelectItem>
+                              <SelectItem value="MATH 253">MATH 253 - Engineering Mathematics III</SelectItem>
+                              <SelectItem value="MATH 300-499">MATH 300-499 - Upper-level Mathematics Courses (Major Course)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Requirement 3: Select a course from MATH 400-499 (3 hours) */}
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-blue-800">3) Select a course from MATH 400-499 (3 credit hours)</h4>
+                    <Badge variant="outline">3 hours required</Badge>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 p-2 bg-white rounded border">
+                      <Checkbox
+                        checked={selectedMinorRequirement[course.id] === "req3" && checkedCourses.has(minorDropdownSelections["req3"] || "")}
+                        onCheckedChange={() => {
+                          if (selectedMinorRequirement[course.id] === "req3") {
+                            // Uncheck current selection
+                            const selectedCourse = minorDropdownSelections["req3"];
+                            if (selectedCourse) {
+                              onToggleCourseCompletion(selectedCourse);
+                            }
+                            // Note: This would need to be handled by parent component
+                          } else {
+                            // Check this requirement and uncheck others
+                            // Note: This would need to be handled by parent component
+                          }
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <div className="flex-1">
+                        <Select
+                          value={minorDropdownSelections["req3"] || ""}
+                          onValueChange={(value) => onMinorDropdownSelection("req3", value)}
+                          disabled={selectedMinorRequirement[course.id] !== "req3"}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Choose a course" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="reset">Reset selection</SelectItem>
+                            <SelectItem value="MATH 400-499">MATH 400-499 - Advanced Mathematics Courses</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Area Electives - Only show if Area Emphasis is selected */}
+            {selectedElectiveType[course.id] === "Area Emphasis" && (
+              <div className="space-y-3">
+                <div className="p-3 bg-white rounded border">
+                  <div className="space-y-3">
+                    {/* Track Selection */}
+                    <div className="space-y-1">
+                      <Label className="text-sm font-medium">Select Track:</Label>
+                      <Select
+                        value={selectedAreaTracks[course.id] || ""}
+                        onValueChange={(value) => onAreaTrackSelection(course.id, value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Choose a track" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="reset">Reset track selection</SelectItem>
+                          {areaElectivesData["Computer Engineering Area Electives"]["Depth Tracks"].map((track) => (
+                            <SelectItem key={track["Track Name"]} value={track["Track Name"]}>
+                              {track["Track Name"]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Course Selection - Only show if track is selected */}
+                    {selectedAreaTracks[course.id] && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={checkedCourses.has(selectedAreaElectives[course.id] || "")}
+                            onCheckedChange={() => {
+                              const selectedCourse = selectedAreaElectives[course.id];
+                              if (selectedCourse) {
+                                onToggleCourseCompletion(selectedCourse);
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                          <div className="flex-1">
+                            <Label className="text-sm font-medium">Select Course:</Label>
+                            <Select
+                              value={selectedAreaElectives[course.id] || ""}
+                              onValueChange={(value) => onAreaElectiveSelection(course.id, value)}
+                            >
+                              <SelectTrigger className="w-full mt-1">
+                                <SelectValue placeholder="Choose a course" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="reset">Reset course selection</SelectItem>
+                                {areaElectivesData["Computer Engineering Area Electives"]["Depth Tracks"]
+                                  .find(track => track["Track Name"] === selectedAreaTracks[course.id])
+                                  ?.Courses.map((c) => (
+                                    <SelectItem key={c.Course} value={c.Course}>
+                                      {c.Course} - {c.Name} ({c.Credits}h)
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        {selectedAreaElectives[course.id] && (
+                          <div className="text-xs text-muted-foreground">
+                            {(() => {
+                              const selectedCourse = areaElectivesData["Computer Engineering Area Electives"]["Depth Tracks"]
+                                .flatMap(track => track.Courses)
+                                .find(c => c.Course === selectedAreaElectives[course.id]);
+                              return selectedCourse ? `Credits: ${selectedCourse.Credits}` : '';
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+        <div className="flex items-center gap-2">
+          <span className="font-medium font-[Open_Sans]">{course.code}</span>
+          {course.name && (
+            <>
+              <span className="text-xs text-muted-foreground">•</span>
+              <span className="text-sm font-[Open_Sans]">{course.name}</span>
+            </>
+          )}
+        </div>
+        )}
+      </div>
+      <Badge variant="outline">{course.hours}h</Badge>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onRemoveCourse(semesterId, course.id)}
+        className="opacity-0 group-hover:opacity-100 transition-opacity font-[Open_Sans]"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
 interface DegreePlannerProps {
   major: string;
+  minor?: string;
   onBack: (toHome?: boolean) => void;
 }
 
@@ -145,13 +629,24 @@ const getRemainingCoursesInCategory = (categoryName: string, completedCourses: s
     }));
 };
 
-function DegreePlanner({ major, onBack }: DegreePlannerProps) {
+function DegreePlanner({ major, minor, onBack }: DegreePlannerProps) {
   const [semesters, setSemesters] = useState<Semester[]>(initialSemesters);
   const [completedCourses, setCompletedCourses] = useState<string[]>(() => {
     const saved = localStorage.getItem('completedCourses');
     return saved ? JSON.parse(saved) : [];
   });
   const [currentSemester, setCurrentSemester] = useState<string>("Fall Year 1");
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("planner");
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
   
   // Load checked courses from localStorage on component mount
   const [checkedCourses, setCheckedCourses] = useState<Set<string>>(() => {
@@ -169,6 +664,42 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
   const [selectedUccCategory, setSelectedUccCategory] = useState<{ [key: string]: string }>(() => {
     const saved = localStorage.getItem('selectedUccCategory');
     return saved ? JSON.parse(saved) : {};
+  });
+
+  // State for elective type selection (UCC, Minor, Area Emphasis)
+  const [selectedElectiveType, setSelectedElectiveType] = useState<{ [key: string]: string }>(() => {
+    // Clear previously selected boxes on page load
+    return {};
+  });
+
+  // State for selected minor courses
+  const [selectedMinorCourses, setSelectedMinorCourses] = useState<{ [key: string]: string }>(() => {
+    const saved = localStorage.getItem('selectedMinorCourses');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  // State for minor course dropdown selections
+  const [minorDropdownSelections, setMinorDropdownSelections] = useState<{ [key: string]: string }>(() => {
+    const saved = localStorage.getItem('minorDropdownSelections');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  // State for area elective selections
+  const [selectedAreaElectives, setSelectedAreaElectives] = useState<{ [key: string]: string }>(() => {
+    // Clear previously selected boxes on page load
+    return {};
+  });
+
+  // State for area elective track selections
+  const [selectedAreaTracks, setSelectedAreaTracks] = useState<{ [key: string]: string }>(() => {
+    // Clear previously selected boxes on page load
+    return {};
+  });
+
+  // State for selected minor requirement (single choice)
+  const [selectedMinorRequirement, setSelectedMinorRequirement] = useState<{ [key: string]: string }>(() => {
+    // Clear previously selected boxes on page load
+    return {};
   });
 
   // State for TAMU courses (courses completed from degree plan)
@@ -190,12 +721,26 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     semesters.forEach(semester => {
       semester.courses.forEach(course => {
         // Check if this course is completed (checked)
-        const courseCode = course.code === "UCC Elective" && selectedUccCourses[course.id] 
-          ? selectedUccCourses[course.id] 
+        const courseCode = course.code === "UCC Elective" 
+          ? (selectedElectiveType[course.id] === "UCC" && selectedUccCourses[course.id] 
+              ? selectedUccCourses[course.id] 
+              : selectedElectiveType[course.id] === "Minor" && minorDropdownSelections["req1"]
+              ? minorDropdownSelections["req1"]
+              : selectedElectiveType[course.id] === "Area Emphasis" && selectedAreaElectives[course.id]
+              ? selectedAreaElectives[course.id]
+              : course.code)
           : course.code;
         
         if (checkedCourses.has(courseCode)) {
-          completedCredits += course.hours;
+          // For area electives, get the actual credit hours from the data
+          if (selectedElectiveType[course.id] === "Area Emphasis" && selectedAreaElectives[course.id]) {
+            const selectedCourse = areaElectivesData["Computer Engineering Area Electives"]["Depth Tracks"]
+              .flatMap(track => track.Courses)
+              .find(c => c.Course === selectedAreaElectives[course.id]);
+            completedCredits += selectedCourse ? selectedCourse.Credits : course.hours;
+          } else {
+            completedCredits += course.hours;
+          }
         }
       });
     });
@@ -304,11 +849,222 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     }
   };
 
+  const handleMinorCourseSelection = (requirementId: string, selectedCourseCode: string) => {
+    if (selectedCourseCode === "reset") {
+      // Reset minor course selection
+      const newSelectedMinor = { ...selectedMinorCourses };
+      delete newSelectedMinor[requirementId];
+      setSelectedMinorCourses(newSelectedMinor);
+      localStorage.setItem('selectedMinorCourses', JSON.stringify(newSelectedMinor));
+    } else {
+      // Update with selected minor course
+      const newSelectedMinor = { ...selectedMinorCourses, [requirementId]: selectedCourseCode };
+      setSelectedMinorCourses(newSelectedMinor);
+      localStorage.setItem('selectedMinorCourses', JSON.stringify(newSelectedMinor));
+    }
+  };
+
+  const handleMinorDropdownSelection = (requirementId: string, selectedCourseCode: string) => {
+    // For single-choice minor selection, clear other selections first
+    if (selectedCourseCode && selectedCourseCode !== 'reset') {
+      // Clear all other minor selections for this course
+      const newSelections = { ...minorDropdownSelections };
+      Object.keys(newSelections).forEach(key => {
+        if (key.startsWith(requirementId.split('_')[0])) {
+          delete newSelections[key];
+        }
+      });
+      newSelections[requirementId] = selectedCourseCode;
+      setMinorDropdownSelections(newSelections);
+      localStorage.setItem('minorDropdownSelections', JSON.stringify(newSelections));
+      
+      // Update selected minor requirement
+      const newSelectedRequirement = { ...selectedMinorRequirement, [requirementId.split('_')[0]]: requirementId };
+      setSelectedMinorRequirement(newSelectedRequirement);
+      localStorage.setItem('selectedMinorRequirement', JSON.stringify(newSelectedRequirement));
+      
+      // Also add to completed courses if not already there
+      if (!checkedCourses.has(selectedCourseCode)) {
+        toggleCourseCompletion(selectedCourseCode);
+      }
+    } else if (selectedCourseCode === 'reset') {
+      // Reset this specific selection
+      const newSelections = { ...minorDropdownSelections };
+      delete newSelections[requirementId];
+      setMinorDropdownSelections(newSelections);
+      localStorage.setItem('minorDropdownSelections', JSON.stringify(newSelections));
+      
+      // Clear selected minor requirement if this was the selected one
+      const newSelectedRequirement = { ...selectedMinorRequirement };
+      if (newSelectedRequirement[requirementId.split('_')[0]] === requirementId) {
+        delete newSelectedRequirement[requirementId.split('_')[0]];
+        setSelectedMinorRequirement(newSelectedRequirement);
+        localStorage.setItem('selectedMinorRequirement', JSON.stringify(newSelectedRequirement));
+      }
+    }
+  };
+
+  const handleElectiveTypeSelection = (semesterId: string, electiveType: string) => {
+    const newSelections = { ...selectedElectiveType, [semesterId]: electiveType };
+    setSelectedElectiveType(newSelections);
+    localStorage.setItem('selectedElectiveType', JSON.stringify(newSelections));
+  };
+
+  const handleAreaTrackSelection = (courseId: string, selectedTrack: string) => {
+    if (selectedTrack === "reset") {
+      const newTracks = { ...selectedAreaTracks };
+      const newSelections = { ...selectedAreaElectives };
+      delete newTracks[courseId];
+      delete newSelections[courseId];
+      setSelectedAreaTracks(newTracks);
+      setSelectedAreaElectives(newSelections);
+      localStorage.setItem('selectedAreaTracks', JSON.stringify(newTracks));
+      localStorage.setItem('selectedAreaElectives', JSON.stringify(newSelections));
+    } else {
+      const newTracks = { ...selectedAreaTracks, [courseId]: selectedTrack };
+      setSelectedAreaTracks(newTracks);
+      localStorage.setItem('selectedAreaTracks', JSON.stringify(newTracks));
+    }
+  };
+
+  const handleAreaElectiveSelection = (courseId: string, selectedCourseCode: string) => {
+    if (selectedCourseCode === "reset") {
+      const newSelections = { ...selectedAreaElectives };
+      delete newSelections[courseId];
+      setSelectedAreaElectives(newSelections);
+      localStorage.setItem('selectedAreaElectives', JSON.stringify(newSelections));
+    } else {
+      const newSelections = { ...selectedAreaElectives, [courseId]: selectedCourseCode };
+      setSelectedAreaElectives(newSelections);
+      localStorage.setItem('selectedAreaElectives', JSON.stringify(newSelections));
+    }
+  };
+
   const getSemesterLabel = (semesterName: string) => {
     if (semesterName === currentSemester) {
       return `${semesterName} (Current Semester)`;
     }
     return semesterName;
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Find the source semester and course
+    let sourceSemester: Semester | null = null;
+    let sourceCourse: Course | null = null;
+    let sourceIndex = -1;
+
+    for (const semester of semesters) {
+      const courseIndex = semester.courses.findIndex(course => course.id === activeId);
+      if (courseIndex !== -1) {
+        sourceSemester = semester;
+        sourceCourse = semester.courses[courseIndex];
+        sourceIndex = courseIndex;
+        break;
+      }
+    }
+
+    if (!sourceSemester || !sourceCourse) return;
+
+    // Check if dropping on a semester (overId is a semester ID)
+    const targetSemester = semesters.find(semester => semester.id === overId);
+    
+    if (targetSemester) {
+      // Moving to a different semester
+      if (sourceSemester.id !== targetSemester.id) {
+        setSemesters(prevSemesters => 
+          prevSemesters.map(semester => {
+            if (semester.id === sourceSemester!.id) {
+              // Remove from source semester
+              return {
+                ...semester,
+                courses: semester.courses.filter(course => course.id !== activeId)
+              };
+            } else if (semester.id === targetSemester.id) {
+              // Add to target semester
+              return {
+                ...semester,
+                courses: [...semester.courses, sourceCourse!]
+              };
+            }
+            return semester;
+          })
+        );
+      }
+    } else {
+      // Check if dropping on another course (find which semester it belongs to)
+      let targetSemester: Semester | null = null;
+      let targetIndex = -1;
+
+      for (const semester of semesters) {
+        const courseIndex = semester.courses.findIndex(course => course.id === overId);
+        if (courseIndex !== -1) {
+          targetSemester = semester;
+          targetIndex = courseIndex;
+          break;
+        }
+      }
+
+      if (targetSemester && sourceSemester) {
+        if (sourceSemester.id === targetSemester.id) {
+          // Reordering within the same semester
+          const newCourses = [...sourceSemester.courses];
+          const [removed] = newCourses.splice(sourceIndex, 1);
+          newCourses.splice(targetIndex, 0, removed);
+
+          setSemesters(prevSemesters =>
+            prevSemesters.map(semester =>
+              semester.id === sourceSemester!.id
+                ? { ...semester, courses: newCourses }
+                : semester
+            )
+          );
+        } else {
+          // Moving between different semesters
+          setSemesters(prevSemesters =>
+            prevSemesters.map(semester => {
+              if (semester.id === sourceSemester!.id) {
+                // Remove from source semester
+                return {
+                  ...semester,
+                  courses: semester.courses.filter(course => course.id !== activeId)
+                };
+              } else if (semester.id === targetSemester!.id) {
+                // Add to target semester at the target position
+                const newCourses = [...semester.courses];
+                newCourses.splice(targetIndex, 0, sourceCourse!);
+                return {
+                  ...semester,
+                  courses: newCourses
+                };
+              }
+              return semester;
+            })
+          );
+        }
+      }
+    }
+  };
+
+  // Get the currently dragged course for the overlay
+  const getDraggedCourse = () => {
+    for (const semester of semesters) {
+      const course = semester.courses.find(course => course.id === activeId);
+      if (course) return course;
+    }
+    return null;
   };
 
   return (
@@ -333,26 +1089,57 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
             <h1 className="text-4xl tracking-tight text-[#800000] font-[Passion_One] font-bold italic">
               Academic Dashboard
             </h1>
-            <p className="text-muted-foreground font-[Open_Sans]">{major}</p>
+            <div className="space-y-1">
+              <p className="text-muted-foreground font-[Open_Sans]">Major: {major}</p>
+              {minor && <p className="text-muted-foreground font-[Open_Sans]">Minor: {minor}</p>}
+            </div>
           </div>
           <div className="w-24"></div>
         </div>
 
-        <Tabs defaultValue="planner" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex w-full h-12 bg-white/90 backdrop-blur-sm shadow-sm border rounded-lg">
-            <TabsTrigger value="planner" className="flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4">
+            <TabsTrigger 
+              value="planner" 
+              className={`flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4 transition-all ${
+                activeTab === "planner" 
+                  ? "bg-gray-800 text-white shadow-md" 
+                  : "hover:bg-gray-100"
+              }`}
+            >
               <Calendar className="h-4 w-4" />
               Degree Planner
             </TabsTrigger>
-            <TabsTrigger value="courses" className="flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4">
+            <TabsTrigger 
+              value="courses" 
+              className={`flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4 transition-all ${
+                activeTab === "courses" 
+                  ? "bg-gray-800 text-white shadow-md" 
+                  : "hover:bg-gray-100"
+              }`}
+            >
               <BookOpen className="h-4 w-4" />
               Course Catalog
             </TabsTrigger>
-            <TabsTrigger value="previous" className="flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4">
+            <TabsTrigger 
+              value="previous" 
+              className={`flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4 transition-all ${
+                activeTab === "previous" 
+                  ? "bg-gray-800 text-white shadow-md" 
+                  : "hover:bg-gray-100"
+              }`}
+            >
               <History className="h-4 w-4" />
               Previous Courses
             </TabsTrigger>
-            <TabsTrigger value="evaluation" className="flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4">
+            <TabsTrigger 
+              value="evaluation" 
+              className={`flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4 transition-all ${
+                activeTab === "evaluation" 
+                  ? "bg-gray-800 text-white shadow-md" 
+                  : "hover:bg-gray-100"
+              }`}
+            >
               <GraduationCap className="h-4 w-4" />
               Degree Evaluation
             </TabsTrigger>
@@ -360,16 +1147,17 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
 
 
           <TabsContent value="planner" className="space-y-6 mt-6">
+
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-[Passion_One] text-gray-800">Progress Overview</h2>
                 <div className="flex items-center gap-3">
-                  <Badge variant="secondary">
+                <Badge variant="secondary">
                     {getCompletedCredits()} / 120 Credits Completed
                   </Badge>
                   <Badge variant="outline">
                     {getTotalCredits()} Total Credits Planned
-                  </Badge>
+                </Badge>
                 </div>
               </div>
               <div className="w-full bg-secondary rounded-full h-3">
@@ -385,157 +1173,129 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              {semesters.map((semester) => (
-                <Card key={semester.id}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="font-[Passion_One]">
-                        {getSemesterLabel(semester.name)}
-                      </CardTitle>
-                      <div className="flex items-center gap-2">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="grid md:grid-cols-2 gap-6">
+                {semesters.map((semester) => (
+                  <Card key={semester.id} id={semester.id}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="font-[Passion_One]">
+                          {getSemesterLabel(semester.name)}
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
                         <Badge>{getTotalHours(semester.courses)} hours</Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeSemester(semester.id)}
-                          className="opacity-60 hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
-                          title="Delete Semester"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeSemester(semester.id)}
+                            className="opacity-60 hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Delete Semester"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <SortableContext items={semester.courses.map(course => course.id)} strategy={verticalListSortingStrategy}>
+                        {semester.courses.map((course) => (
+                          <DraggableCourse
+                            key={course.id}
+                            course={course}
+                            semesterId={semester.id}
+                            checkedCourses={checkedCourses}
+                            selectedElectiveType={selectedElectiveType}
+                            selectedUccCourses={selectedUccCourses}
+                            selectedUccCategory={selectedUccCategory}
+                            minorDropdownSelections={minorDropdownSelections}
+                            selectedAreaElectives={selectedAreaElectives}
+                            selectedAreaTracks={selectedAreaTracks}
+                            selectedMinorRequirement={selectedMinorRequirement}
+                            onToggleCourseCompletion={toggleCourseCompletion}
+                            onRemoveCourse={removeCourse}
+                            onUccCategorySelection={handleUccCategorySelection}
+                            onUccSelection={handleUccSelection}
+                            onMinorCourseSelection={handleMinorCourseSelection}
+                            onMinorDropdownSelection={handleMinorDropdownSelection}
+                            onElectiveTypeSelection={handleElectiveTypeSelection}
+                            onAreaTrackSelection={handleAreaTrackSelection}
+                            onAreaElectiveSelection={handleAreaElectiveSelection}
+                            getRemainingCoursesInCategory={getRemainingCoursesInCategory}
+                            getUccCategories={getUccCategories}
+                            completedCourses={completedCourses}
+                          />
+                        ))}
+                      </SortableContext>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full mt-2 font-[Open_Sans]"
+                        onClick={() => {
+                          console.log('Add course button clicked for semester:', semester.id);
+                          const code = prompt('Enter course code (e.g., CSCE 121):');
+                          if (code && code.trim()) {
+                            const course: Course = {
+                              id: `course-${Date.now()}`,
+                              code: code.trim(),
+                              name: '', // Empty name since we're only asking for code
+                              hours: 3 // Default to 3 credit hours
+                            };
+                            setSemesters(semesters.map(sem => 
+                              sem.id === semester.id 
+                                ? { ...sem, courses: [...sem.courses, course] }
+                                : sem
+                            ));
+                            console.log('Course added:', course);
+                          }
+                        }}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Course
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <DragOverlay>
+                {activeId ? (
+                  <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg shadow-lg border">
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium font-[Open_Sans]">
+                          {(() => {
+                            const course = getDraggedCourse();
+                            return course ? course.code : '';
+                          })()}
+                        </span>
+                        {(() => {
+                          const course = getDraggedCourse();
+                          return course && course.name ? (
+                            <>
+                              <span className="text-xs text-muted-foreground">•</span>
+                              <span className="text-sm font-[Open_Sans]">{course.name}</span>
+                            </>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {semester.courses.map((course) => (
-                      <div
-                        key={course.id}
-                        className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors group"
-                      >
-                        <GripVertical className="h-4 w-4 text-muted-foreground" />
-                        <Checkbox
-                          checked={checkedCourses.has(course.code === "UCC Elective" && selectedUccCourses[course.id] ? selectedUccCourses[course.id] : course.code)}
-                          onCheckedChange={() => toggleCourseCompletion(course.code === "UCC Elective" && selectedUccCourses[course.id] ? selectedUccCourses[course.id] : course.code)}
-                          className="h-4 w-4"
-                        />
-                        <div className="flex-1">
-                          {course.code === "UCC Elective" ? (
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium font-[Open_Sans]">
-                                  {selectedUccCourses[course.id] || "UCC Elective"}
-                                </span>
-                                {course.name && (
-                                  <>
-                                    <span className="text-xs text-muted-foreground">•</span>
-                                    <span className="text-sm font-[Open_Sans]">
-                                      {selectedUccCourses[course.id] 
-                                        ? getRemainingCoursesInCategory(selectedUccCategory[course.id] || "", completedCourses).find(opt => opt.code === selectedUccCourses[course.id])?.name
-                                        : course.name
-                                      }
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                              
-                              {/* Category Selection */}
-                              <div className="space-y-1">
-                                <Label className="text-xs font-medium text-muted-foreground">Select Category:</Label>
-                                <Select
-                                  value={selectedUccCategory[course.id] || ""}
-                                  onValueChange={(value: string) => handleUccCategorySelection(course.id, value)}
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Choose UCC Category" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="reset">Reset to UCC Elective</SelectItem>
-                                    {getUccCategories(completedCourses).map((category) => (
-                                      <SelectItem key={category.code} value={category.name}>
-                                        {category.name} ({category.completed}/{category.required} credits)
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
+                    <Badge variant="outline">
+                      {(() => {
+                        const course = getDraggedCourse();
+                        return course ? `${course.hours}h` : '';
+                      })()}
+                    </Badge>
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
 
-                              {/* Course Selection - Only show if category is selected */}
-                              {selectedUccCategory[course.id] && (
-                                <div className="space-y-1">
-                                  <Label className="text-xs font-medium text-muted-foreground">Select Course:</Label>
-                                  <Select
-                                    value={selectedUccCourses[course.id] || ""}
-                                    onValueChange={(value: string) => handleUccSelection(course.id, value)}
-                                  >
-                                    <SelectTrigger className="w-full">
-                                      <SelectValue placeholder="Choose specific course" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="reset">Reset course selection</SelectItem>
-                                      {getRemainingCoursesInCategory(selectedUccCategory[course.id], completedCourses).map((option) => (
-                                        <SelectItem key={option.code} value={option.code}>
-                                          {option.code} - {option.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium font-[Open_Sans]">{course.code}</span>
-                              {course.name && (
-                                <>
-                                  <span className="text-xs text-muted-foreground">•</span>
-                                  <span className="text-sm font-[Open_Sans]">{course.name}</span>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <Badge variant="outline">{course.hours}h</Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeCourse(semester.id, course.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity font-[Open_Sans]"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full mt-2 font-[Open_Sans]"
-                      onClick={() => {
-                        console.log('Add course button clicked for semester:', semester.id);
-                        const code = prompt('Enter course code (e.g., CSCE 121):');
-                        if (code && code.trim()) {
-                          const course: Course = {
-                            id: `course-${Date.now()}`,
-                            code: code.trim(),
-                            name: '', // Empty name since we're only asking for code
-                            hours: 3 // Default to 3 credit hours
-                          };
-                          setSemesters(semesters.map(sem => 
-                            sem.id === semester.id 
-                              ? { ...sem, courses: [...sem.courses, course] }
-                              : sem
-                          ));
-                          console.log('Course added:', course);
-                        }
-                      }}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Course
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
 
             <div className="flex justify-center">
               <Button 
@@ -563,24 +1323,25 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
           </TabsContent>
 
           <TabsContent value="courses" className="mt-6">
-            <CourseList major={major} onBack={() => {}} />
+            <CourseList major={major} minor={minor} onBack={() => {}} />
           </TabsContent>
 
-            <TabsContent value="previous" className="mt-6">
+          <TabsContent value="previous" className="mt-6">
               <PreviousCourses 
                 major={major} 
                 onBack={() => {}} 
                 completedCourses={completedCourses}
               />
-            </TabsContent>
+          </TabsContent>
 
             <TabsContent value="evaluation" className="mt-6">
               <DegreeEvaluation 
                 major={major} 
+                minor={minor}
                 onBack={() => {}} 
                 completedCourses={completedCourses}
               />
-            </TabsContent>
+          </TabsContent>
         </Tabs>
       </div>
     </div>

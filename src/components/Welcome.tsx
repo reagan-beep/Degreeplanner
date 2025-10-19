@@ -16,7 +16,6 @@ interface User {
 interface PageData {
   major: string;
   minor?: string;
-  certificate?: string;
   maxHours?: number;
   currentYear?: string;
 }
@@ -59,7 +58,6 @@ function Welcome({
 }: WelcomeProps) {
   const [major, setMajor] = useState(lastMajor || '');
   const [minor, setMinor] = useState('');
-  const [certificate, setCertificate] = useState('');
   const [maxHours, setMaxHours] = useState<number[]>([16]);
   const [currentYear, setCurrentYear] = useState<string>('Freshman');
   const [submitted, setSubmitted] = useState(!!lastMajor);
@@ -80,7 +78,6 @@ function Welcome({
     if (welcomeState === 'initial') {
       setMajor('');
       setMinor('');
-      setCertificate('');
       setMaxHours([16]);
       setCurrentYear('Freshman');
       setSubmitted(false);
@@ -102,7 +99,6 @@ function Welcome({
       onGoToSemester && onGoToSemester({ 
         major, 
         minor: minor.trim() || undefined, 
-        certificate: certificate.trim() || undefined,
         maxHours: maxHours[0],
         currentYear
       });
@@ -253,16 +249,6 @@ function Welcome({
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="certificate-input">Certificate (optional)</Label>
-                    <Input
-                      id="certificate-input"
-                      placeholder="e.g. Data Science"
-                      value={certificate}
-                      onChange={(e) => setCertificate(e.target.value)}
-                      className="transition-all duration-200 focus:scale-105"
-                    />
-                  </div>
                   
                   <div className="border-t pt-4 space-y-4">
                     <h3 className="font-semibold text-lg font-[Open_Sans]">Academic Settings</h3>
@@ -368,18 +354,6 @@ function Welcome({
                           />
                         </div>
                         
-                        <div className="space-y-2">
-                          <Label htmlFor="certificate-input-login" className="font-[Open_Sans]">
-                            Certificate (Optional)
-                          </Label>
-                          <Input
-                            id="certificate-input-login"
-                            placeholder="e.g. Data Science"
-                            value={certificate}
-                            onChange={(e) => setCertificate(e.target.value)}
-                            className="transition-all duration-200 focus:scale-105"
-                          />
-                        </div>
                       </div>
                       
                       <div className="border-t pt-4 space-y-4">
