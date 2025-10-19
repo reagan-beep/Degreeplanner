@@ -1531,7 +1531,7 @@ function DegreePlanner({ major, minor, certificate, maxHours, currentYear, curre
               value="planner" 
               className={`flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4 transition-all ${
                 activeTab === "planner" 
-                  ? "bg-gray-800 text-white shadow-md" 
+                  ? "bg-gray-800 text-black shadow-md" 
                   : "hover:bg-gray-100"
               }`}
             >
@@ -1542,7 +1542,7 @@ function DegreePlanner({ major, minor, certificate, maxHours, currentYear, curre
               value="courses" 
               className={`flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4 transition-all ${
                 activeTab === "courses" 
-                  ? "bg-gray-800 text-white shadow-md" 
+                  ? "bg-gray-800 text-black shadow-md" 
                   : "hover:bg-gray-100"
               }`}
             >
@@ -1553,7 +1553,7 @@ function DegreePlanner({ major, minor, certificate, maxHours, currentYear, curre
               value="previous" 
               className={`flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4 transition-all ${
                 activeTab === "previous" 
-                  ? "bg-gray-800 text-white shadow-md" 
+                  ? "bg-gray-800 text-black shadow-md" 
                   : "hover:bg-gray-100"
               }`}
             >
@@ -1564,7 +1564,7 @@ function DegreePlanner({ major, minor, certificate, maxHours, currentYear, curre
               value="evaluation" 
               className={`flex-1 flex items-center justify-center gap-2 font-[Open_Sans] px-4 transition-all ${
                 activeTab === "evaluation" 
-                  ? "bg-gray-800 text-white shadow-md" 
+                  ? "bg-gray-800 text-black shadow-md" 
                   : "hover:bg-gray-100"
               }`}
             >
@@ -1593,7 +1593,7 @@ function DegreePlanner({ major, minor, certificate, maxHours, currentYear, curre
                 ></div>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground mt-2">
-                <span>0 credits</span>
+                <span></span>
                 <span>{Math.round((getCompletedCredits() / 120) * 100)}% Complete</span>
                 <span>120 credits</span>
               </div>
@@ -1611,7 +1611,7 @@ function DegreePlanner({ major, minor, certificate, maxHours, currentYear, curre
                 </Button>
                 <Button 
                   onClick={fillSemesters}
-                  className="bg-black text-white border border-black hover:bg-gray-800 font-[Open_Sans]"
+                  className="bg-black text-black border border-black hover:bg-gray-800 font-[Open_Sans]"
                 >
                   Generate Degree Plan
                 </Button>
