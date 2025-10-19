@@ -13,6 +13,8 @@ interface User {
 
 interface PageData {
   major: string;
+  minor?: string;
+  certificate?: string;
   maxHours?: string;
   currentYear?: string;
 }
@@ -54,6 +56,8 @@ function Welcome({
   lastMajor 
 }: WelcomeProps) {
   const [major, setMajor] = useState(lastMajor || '');
+  const [minor, setMinor] = useState('');
+  const [certificate, setCertificate] = useState('');
   const [submitted, setSubmitted] = useState(!!lastMajor);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -63,6 +67,8 @@ function Welcome({
   useEffect(() => {
     if (welcomeState === 'initial') {
       setMajor('');
+      setMinor('');
+      setCertificate('');
       setSubmitted(false);
       setLoading(false);
       setPath(null);
@@ -79,7 +85,11 @@ function Welcome({
     // Simulate processing delay then go directly to degree planner
     setTimeout(() => {
       setLoading(false);
-      onGoToSemester && onGoToSemester({ major });
+      onGoToSemester && onGoToSemester({ 
+        major, 
+        minor: minor.trim() || undefined, 
+        certificate: certificate.trim() || undefined 
+      });
     }, 1400);
   }
 
@@ -194,6 +204,27 @@ function Welcome({
                       ))}
                     </datalist>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="minor-input">Minor (optional)</Label>
+                    <Input
+                      id="minor-input"
+                      placeholder="e.g. Mathematics"
+                      value={minor}
+                      onChange={(e) => setMinor(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="certificate-input">Certificate (optional)</Label>
+                    <Input
+                      id="certificate-input"
+                      placeholder="e.g. Data Science"
+                      value={certificate}
+                      onChange={(e) => setCertificate(e.target.value)}
+                    />
+                  </div>
+                  
                   <Button type="submit" className="w-full font-[Open_Sans]">Continue</Button>
                 </form>
                 <Button 
@@ -229,6 +260,27 @@ function Welcome({
                           ))}
                         </datalist>
                       </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="minor-input">Minor (optional)</Label>
+                        <Input
+                          id="minor-input"
+                          placeholder="e.g. Mathematics"
+                          value={minor}
+                          onChange={(e) => setMinor(e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="certificate-input">Certificate (optional)</Label>
+                        <Input
+                          id="certificate-input"
+                          placeholder="e.g. Data Science"
+                          value={certificate}
+                          onChange={(e) => setCertificate(e.target.value)}
+                        />
+                      </div>
+                      
                       <Button type="submit" className="w-full font-[Open_Sans]">Continue</Button>
                     </form>
                   </div>

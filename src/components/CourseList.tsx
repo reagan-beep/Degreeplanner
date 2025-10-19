@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { ArrowLeft, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import cpenData from '../data/ce_courses.json';
+import mathMinorData from '../data/math_minor_courses.json';
 
 interface Course {
   code: string;
@@ -17,98 +19,85 @@ interface Course {
 
 interface CourseListProps {
   major: string;
+  minor?: string;
+  certificate?: string;
   onBack: (toHome?: boolean) => void;
 }
 
-// Mock course data
-const mockCourses: Course[] = [
-  {
-    code: 'CSCE 121',
-    name: 'Program Design and Concepts',
-    hours: 3,
-    description: 'Computational problem-solving techniques using the C++ programming language.',
-    prerequisites: 'None',
-    category: 'Core',
-  },
-  {
-    code: 'CSCE 221',
-    name: 'Data Structures and Algorithms',
-    hours: 3,
-    description: 'Specification, implementation, applications and analysis of basic data structures.',
-    prerequisites: 'CSCE 121',
-    category: 'Core',
-  },
-  {
-    code: 'CSCE 310',
-    name: 'Database Systems',
-    hours: 3,
-    description: 'Database design, implementation, and applications.',
-    prerequisites: 'CSCE 221',
-    category: 'Core',
-  },
-  {
-    code: 'CSCE 312',
-    name: 'Computer Organization',
-    hours: 4,
-    description: 'Computer organization, machine language, instruction execution.',
-    prerequisites: 'CSCE 221',
-    category: 'Core',
-  },
-  {
-    code: 'CSCE 314',
-    name: 'Programming Languages',
-    hours: 3,
-    description: 'Concepts of programming languages, paradigms, and language implementation.',
-    prerequisites: 'CSCE 221',
-    category: 'Core',
-  },
-  {
-    code: 'CSCE 315',
-    name: 'Programming Studio',
-    hours: 3,
-    description: 'Intensive software engineering group project.',
-    prerequisites: 'CSCE 221',
-    category: 'Core',
-  },
-  {
-    code: 'CSCE 411',
-    name: 'Design and Analysis of Algorithms',
-    hours: 3,
-    description: 'Analysis and design of computer algorithms.',
-    prerequisites: 'CSCE 221, MATH 304',
-    category: 'Core',
-  },
-  {
-    code: 'CSCE 433',
-    name: 'Formal Languages and Automata',
-    hours: 3,
-    description: 'Formal languages and automata theory.',
-    prerequisites: 'CSCE 222',
-    category: 'Elective',
-  },
-  {
-    code: 'CSCE 431',
-    name: 'Software Engineering',
-    hours: 3,
-    description: 'Application of engineering principles to software development.',
-    prerequisites: 'CSCE 315',
-    category: 'Elective',
-  },
-  {
-    code: 'CSCE 462',
-    name: 'Microcomputer Systems',
-    hours: 4,
-    description: 'Design and application of microprocessor-based systems.',
-    prerequisites: 'CSCE 312',
-    category: 'Elective',
-  },
-];
+// Convert CPEN data to Course format
+const convertCpenToCourses = (): Course[] => {
+  const cpenCourses = cpenData["Computer Engineering"];
+  return cpenCourses.map((course, index) => {
+    let courseCode = course.course;
+    let courseName = course.name;
+    
+    if (course.course.includes("University Core Curriculum")) {
+      courseCode = "UCC Elective";
+      courseName = "University Core Curriculum";
+    } else if (course.course.includes("Senior design")) {
+      courseCode = "Senior Design";
+      courseName = "Senior Design Project";
+    }
 
-function CourseList({ major, onBack }: CourseListProps) {
+    return {
+      code: courseCode,
+      name: Array.isArray(courseName) ? courseName[0] : (courseName || courseCode),
+      hours: course.credits,
+      description: course.prereqs || "No prerequisites listed",
+      prerequisites: course.prereqs || "None",
+      category: "Core"
+    };
+  });
+};
+
+// Convert Math Minor data to Course format
+const convertMathMinorToCourses = (): Course[] => {
+  const mathCourses = mathMinorData["Math Minor"];
+  return mathCourses.map((course, index) => {
+    let courseCode = course.course;
+    let courseName = course.name;
+    
+    if (course.alternatives && course.alternatives.length > 0) {
+      // Use the first alternative as the main course
+      const mainCourse = course.alternatives[0];
+      courseCode = mainCourse.course;
+      courseName = mainCourse.name;
+    }
+
+    return {
+      code: courseCode,
+      name: Array.isArray(courseName) ? courseName[0] : (courseName || courseCode),
+      hours: course.credits,
+      description: course.note || course.prereqs || "No description available",
+      prerequisites: course.prereqs || "None",
+      category: "Minor"
+    };
+  });
+};
+
+const cpenCourses = convertCpenToCourses();
+const mathMinorCourses = convertMathMinorToCourses();
+
+function CourseList({ major, minor, certificate, onBack }: CourseListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
 
-  const filteredCourses = mockCourses.filter((course) => {
+  // Determine which courses to show based on major and minor
+  let coursesToShow: Course[] = [];
+  let sectionTitle = "";
+  
+  if (major.toLowerCase().includes('computer engineering')) {
+    coursesToShow = cpenCourses;
+    sectionTitle = "Computer Engineering Major Courses";
+  }
+  
+  if (minor && minor.toLowerCase().includes('math')) {
+    coursesToShow = [...coursesToShow, ...mathMinorCourses];
+    sectionTitle = coursesToShow.length > mathMinorCourses.length ? 
+      `${sectionTitle} & Math Minor Courses` : "Math Minor Courses";
+  }
+
+  const filteredCourses = coursesToShow.filter((course) => {
     const matchesSearch =
       course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -164,14 +153,19 @@ function CourseList({ major, onBack }: CourseListProps) {
               <SelectContent>
                 <SelectItem value="All">All Categories</SelectItem>
                 <SelectItem value="Core">Core</SelectItem>
+                <SelectItem value="Minor">Minor</SelectItem>
                 <SelectItem value="Elective">Elective</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
           <p className="text-sm text-muted-foreground">
-            Showing {filteredCourses.length} of {mockCourses.length} courses
+            Showing {filteredCourses.length} of {coursesToShow.length} courses
           </p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{sectionTitle}</h2>
         </div>
 
         <div className="grid gap-4">

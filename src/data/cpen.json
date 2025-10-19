@@ -1,0 +1,112 @@
+
+{
+  "name": "Computer Engineering Major Requirements",
+  "category": "Major",
+  "creditHoursRequired": 97,
+  "courses": [
+    {
+      "year": 1,
+      "semester": "Fall",
+      "totalHours": 16,
+      "courses": [
+        { "code": "CHEM 107", "title": "General Chemistry for Engineering Students", "hours": 3 },
+        { "code": "CHEM 117", "title": "General Chemistry for Engineering Students Laboratory", "hours": 1 },
+        { "code": "ENGL 103", "title": "Introduction to Rhetoric and Composition", "hours": 3 },
+        { "code": "ENGR 102", "title": "Engineering Lab I - Computation", "hours": 2 },
+        { "code": "MATH 151", "title": "Engineering Mathematics I", "hours": 4 },
+        { "code": "UCC Elective", "title": "University Core Curriculum", "hours": 3 }
+      ]
+    },
+    {
+      "year": 1,
+      "semester": "Spring",
+      "totalHours": 15,
+      "courses": [
+        { "code": "ENGR 216", "title": "Experimental Physics and Engineering Lab II - Mechanics", "hours": 2 },
+        { "code": "MATH 152", "title": "Engineering Mathematics II", "hours": 4 },
+        { "code": "PHYS 206", "title": "Newtonian Mechanics for Engineering and Science", "hours": 3 },
+        { "code": "UCC Elective", "title": "University Core Curriculum", "hours": 3 },
+        { "code": "CHEM 120", "title": "Fundamentals of Chemistry II", "hours": 3 }
+      ]
+    },
+    {
+      "year": 2,
+      "semester": "Fall",
+      "totalHours": 15,
+      "courses": [
+        { "code": "CSCE 120", "title": "Program Design and Concepts", "hours": 3 },
+        { "code": "ECEN 248", "title": "Introduction to Digital Systems Design", "hours": 4 },
+        { "code": "MATH 251", "title": "Engineering Mathematics III", "hours": 3 },
+        { "code": "PHYS 207", "title": "Electricity and Magnetism for Engineering and Science", "hours": 3 },
+        { "code": "PHYS 217", "title": "Experimental Physics and Engineering Lab III - Electricity and Magnetism", "hours": 2 }
+      ]
+    },
+    {
+      "year": 2,
+      "semester": "Spring",
+      "totalHours": 17,
+      "courses": [
+        { "code": "CSCE 221", "title": "Data Structures and Algorithms", "hours": 4 },
+        { "code": "CSCE 222", "title": "Discrete Structures for Computing", "hours": 3 },
+        { "code": "ECEN 214", "title": "Electrical Circuit Theory", "hours": 4 },
+        { "code": "ECEN 303", "title": "Random Signals and Systems", "hours": 3 },
+        { "code": "MATH 308", "title": "Differential Equations", "hours": 3 }
+      ]
+    },
+    {
+      "year": 3,
+      "semester": "Fall",
+      "totalHours": 18,
+      "courses": [
+        { "code": "CSCE 313", "title": "Introduction to Computer Systems", "hours": 4 },
+        { "code": "CSCE 350", "title": "Computer Architecture and Design", "hours": 4 },
+        { "code": "CSCE 481", "title": "Seminar", "hours": 1 },
+        { "code": "ECEN 314", "title": "Signals and Systems", "hours": 3 },
+        { "code": "MATH 311", "title": "Topics in Applied Mathematics I", "hours": 3 },
+        { "code": "COMM 205", "title": "Communication for Technical Professions", "hours": 3 }
+      ]
+    },
+    {
+      "year": 3,
+      "semester": "Spring",
+      "totalHours": 17,
+      "courses": [
+        { "code": "CSCE 331", "title": "Foundations of Software Engineering", "hours": 4 },
+        { "code": "CSCE 462", "title": "Microcomputer Systems", "hours": 3 },
+        { "code": "ECEN 325", "title": "Electronics", "hours": 4 },
+        { "code": "ECEN 454", "title": "Digital Integrated Circuit Design", "hours": 3 },
+        { "code": "UCC Elective", "title": "University Core Curriculum", "hours": 3 }
+      ]
+    },
+    {
+      "year": 4,
+      "semester": "Fall",
+      "totalHours": 15,
+      "courses": [
+        { "code": "ECEN 403", "title": "Senior Design I", "hours": 3 },
+        { "code": "UCC Elective", "title": "University Core Curriculum", "hours": 3 },
+        { "code": "Area Elective", "title": "Major Area Elective", "hours": 6 },
+        { "code": "Engineering Elective", "title": "Technical Elective", "hours": 3 },
+        { "code": "ECEN 399", "title": "High-Impact Experience", "hours": 0 }
+      ]
+    },
+    {
+      "year": 4,
+      "semester": "Spring",
+      "totalHours": 15,
+      "courses": [
+        { "code": "ECEN 404", "title": "Senior Design II", "hours": 3 },
+        { "code": "UCC Elective", "title": "University Core Curriculum", "hours": 6 },
+        { "code": "Area Elective", "title": "Major Area Elective", "hours": 6 }
+      ]
+    }
+  ],
+  "meta": {
+    "notes": [
+      "A grade of C or better is required for all major courses.",
+      "Includes 21 hours of University Core Curriculum electives: Creative Arts (3), Social & Behavioral Sciences (3), Language, Philosophy & Culture (3), American History (6), Government/Political Science (6).",
+      "High-Impact Experience (0 hours) such as internships or co-op required.",
+      "Senior Design sequence: ECEN 403 and ECEN 404."
+    ]
+  }
+}

@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
+import { Checkbox } from './ui/checkbox';
 import { ArrowLeft, Download, FileText } from 'lucide-react';
+import { toast } from 'sonner';
+import cpenData from '../data/ce_courses.json';
 
 interface TemplateProps {
   major: string;
   onBack: (toHome?: boolean) => void;
+  onCourseCompleted?: (course: string) => void;
+  onCourseUnchecked?: (course: string) => void;
+  checkedCourses?: Set<string>;
 }
 
 interface YearPlan {
@@ -15,84 +21,69 @@ interface YearPlan {
   spring: string[];
 }
 
-// Mock template data
-const degreeTemplate: YearPlan[] = [
-  {
-    year: 'Year 1',
-    fall: [
-      'CSCE 121 - Program Design (3h)',
-      'MATH 151 - Calculus I (4h)',
-      'ENGL 104 - Composition (3h)',
-      'CHEM 107 - Chemistry (4h)',
-      'UNIV 101 - First Year Seminar (1h)',
-    ],
-    spring: [
-      'CSCE 221 - Data Structures (3h)',
-      'MATH 152 - Calculus II (4h)',
-      'PHYS 206 - Physics I (3h)',
-      'HIST 105 - US History (3h)',
-      'Elective (3h)',
-    ],
-  },
-  {
-    year: 'Year 2',
-    fall: [
-      'CSCE 222 - Discrete Math (3h)',
-      'CSCE 312 - Computer Organization (4h)',
-      'MATH 304 - Linear Algebra (3h)',
-      'PHYS 207 - Physics II (3h)',
-      'COMM 203 - Public Speaking (3h)',
-    ],
-    spring: [
-      'CSCE 310 - Database Systems (3h)',
-      'CSCE 314 - Programming Languages (3h)',
-      'CSCE 315 - Software Engineering (3h)',
-      'STAT 211 - Statistics (3h)',
-      'Elective (3h)',
-    ],
-  },
-  {
-    year: 'Year 3',
-    fall: [
-      'CSCE 411 - Algorithm Design (3h)',
-      'CSCE 410 - Operating Systems (3h)',
-      'CSCE Elective (3h)',
-      'Technical Elective (3h)',
-      'General Elective (3h)',
-    ],
-    spring: [
-      'CSCE 433 - Formal Languages (3h)',
-      'CSCE Elective (3h)',
-      'CSCE Elective (3h)',
-      'Technical Elective (3h)',
-      'General Elective (3h)',
-    ],
-  },
-  {
-    year: 'Year 4',
-    fall: [
-      'CSCE 482 - Senior Design I (3h)',
-      'CSCE Elective (3h)',
-      'CSCE Elective (3h)',
-      'Technical Elective (3h)',
-      'General Elective (3h)',
-    ],
-    spring: [
-      'CSCE 483 - Senior Design II (3h)',
-      'CSCE Elective (3h)',
-      'Technical Elective (3h)',
-      'General Elective (3h)',
-      'General Elective (3h)',
-    ],
-  },
-];
+// Convert CPEN data to template format
+const convertCpenToTemplate = (): YearPlan[] => {
+  const cpenCourses = cpenData["Computer Engineering"];
+  const yearPlans: { [key: string]: { fall: string[], spring: string[] } } = {};
 
-function Template({ major, onBack }: TemplateProps) {
+  cpenCourses.forEach((course) => {
+    const semesterKey = course.semester;
+    
+    // Extract year from semester
+    let year = "";
+    if (semesterKey.includes("First Year")) year = "Year 1";
+    else if (semesterKey.includes("Second Year")) year = "Year 2";
+    else if (semesterKey.includes("Third Year")) year = "Year 3";
+    else if (semesterKey.includes("Fourth Year")) year = "Year 4";
+
+    if (!yearPlans[year]) {
+      yearPlans[year] = { fall: [], spring: [] };
+    }
+
+    // Format course string
+    let courseCode = course.course;
+    if (course.course.includes("University Core Curriculum")) {
+      courseCode = "UCC Elective";
+    } else if (course.course.includes("Senior design")) {
+      courseCode = "Senior Design";
+    }
+
+    const courseString = `${courseCode} - ${course.name || courseCode} (${course.credits}h)`;
+    
+    if (semesterKey.includes("Fall")) {
+      yearPlans[year].fall.push(courseString);
+    } else if (semesterKey.includes("Spring")) {
+      yearPlans[year].spring.push(courseString);
+    }
+  });
+
+  // Convert to array format
+  return Object.entries(yearPlans).map(([year, courses]) => ({
+    year,
+    fall: courses.fall,
+    spring: courses.spring
+  }));
+};
+
+const degreeTemplate: YearPlan[] = convertCpenToTemplate();
+
+function Template({ major, onBack, onCourseCompleted, onCourseUnchecked, checkedCourses = new Set() }: TemplateProps) {
+
   const getTotalCredits = (courses: string[]) => {
     return courses.reduce((sum, course) => {
       const match = course.match(/\((\d+)h\)/);
       return sum + (match ? parseInt(match[1]) : 0);
     }, 0);
+  };
+
+  const handleCourseCheck = (course: string, checked: boolean) => {
+    if (checked) {
+      onCourseCompleted?.(course);
+      toast.success(`Added ${course} to previous courses`);
+    } else {
+      onCourseUnchecked?.(course);
+      toast.info(`Removed ${course} from previous courses`);
+    }
   };
 
   return (
@@ -157,8 +148,18 @@ function Template({ major, onBack }: TemplateProps) {
                           key={index}
                           className="flex items-start gap-2 text-sm p-2 rounded hover:bg-secondary/50 transition-colors"
                         >
-                          <span className="text-muted-foreground mt-0.5">•</span>
-                          <span>{course}</span>
+                          <Checkbox
+                            id={`fall-${yearPlan.year}-${index}`}
+                            checked={checkedCourses.has(course)}
+                            onCheckedChange={(checked) => handleCourseCheck(course, checked as boolean)}
+                            className="mt-0.5"
+                          />
+                          <label 
+                            htmlFor={`fall-${yearPlan.year}-${index}`}
+                            className={`flex-1 cursor-pointer ${checkedCourses.has(course) ? 'line-through text-muted-foreground' : ''}`}
+                          >
+                            {course}
+                          </label>
                         </li>
                       ))}
                     </ul>
@@ -179,8 +180,18 @@ function Template({ major, onBack }: TemplateProps) {
                           key={index}
                           className="flex items-start gap-2 text-sm p-2 rounded hover:bg-secondary/50 transition-colors"
                         >
-                          <span className="text-muted-foreground mt-0.5">•</span>
-                          <span>{course}</span>
+                          <Checkbox
+                            id={`spring-${yearPlan.year}-${index}`}
+                            checked={checkedCourses.has(course)}
+                            onCheckedChange={(checked) => handleCourseCheck(course, checked as boolean)}
+                            className="mt-0.5"
+                          />
+                          <label 
+                            htmlFor={`spring-${yearPlan.year}-${index}`}
+                            className={`flex-1 cursor-pointer ${checkedCourses.has(course) ? 'line-through text-muted-foreground' : ''}`}
+                          >
+                            {course}
+                          </label>
                         </li>
                       ))}
                     </ul>
