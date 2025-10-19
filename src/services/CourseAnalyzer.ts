@@ -259,6 +259,11 @@ class CourseAnalyzer {
     
     return results;
   }
+
+  // Get all courses from the sample schedule
+  getAllCourses(): CourseData[] {
+    return [...this.allCourses];
+  }
 }
 
 // Export a single instance

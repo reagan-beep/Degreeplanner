@@ -103,7 +103,7 @@
       "difficulty": 3
     },
     {
-      "course": "University Core Curriculum 3,5",
+      "course": "University Core Curriculum",
       "name": "",
       "credits": 3,
       "prereqs": "",
@@ -345,7 +345,7 @@
       "difficulty": 3
     },
     {
-      "course": "Senior design 1,6",
+      "course": "Senior design",
       "name": "",
       "credits": 3,
       "prereqs": "",
@@ -361,7 +361,7 @@
       "difficulty": 3
     },
     {
-      "course": "Senior Design 1,6",
+      "course": "Senior Design",
       "name": "",
       "credits": 3,
       "prereqs": "",
