@@ -448,7 +448,7 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
                 ></div>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground mt-2">
-                <span>0 credits</span>
+                <span>{getCompletedCredits()} credits</span>
                 <span>{Math.round((getCompletedCredits() / 120) * 100)}% Complete</span>
                 <span>120 credits</span>
               </div>
