@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -32,8 +32,8 @@ interface DegreePlannerProps {
   onBack: (toHome?: boolean) => void;
 }
 
-// Convert CPEN data to semester format
-const convertCpenDataToSemesters = (): Semester[] => {
+// Convert CPEN data to semester format with max hours constraint
+const convertCpenDataToSemesters = (maxHoursPerSemester: number = 16): Semester[] => {
   const cpenCourses = cpenData["Computer Engineering"];
   const semesters: { [key: string]: Course[] } = {};
 
@@ -100,7 +100,71 @@ const convertCpenDataToSemesters = (): Semester[] => {
     }
   });
 
-  return semesterArray;
+  // Apply max hours constraint by redistributing courses if needed
+  const redistributedSemesters = applyMaxHoursConstraint(semesterArray, maxHoursPerSemester);
+
+  return redistributedSemesters;
+};
+
+// Helper function to redistribute courses based on max hours constraint
+const applyMaxHoursConstraint = (semesters: Semester[], maxHours: number): Semester[] => {
+  const redistributed: Semester[] = [];
+  let overflowCourses: Course[] = [];
+  
+  semesters.forEach(semester => {
+    const semesterCourses: Course[] = [];
+    let currentHours = 0;
+    
+    // Add courses from previous overflow first
+    while (overflowCourses.length > 0 && currentHours + overflowCourses[0].hours <= maxHours) {
+      const course = overflowCourses.shift()!;
+      semesterCourses.push(course);
+      currentHours += course.hours;
+    }
+    
+    // Add courses from current semester
+    semester.courses.forEach(course => {
+      if (currentHours + course.hours <= maxHours) {
+        semesterCourses.push(course);
+        currentHours += course.hours;
+      } else {
+        overflowCourses.push(course);
+      }
+    });
+    
+    redistributed.push({
+      ...semester,
+      courses: semesterCourses
+    });
+  });
+  
+  // If there are still overflow courses, create additional semesters
+  let semesterCounter = semesters.length + 1;
+  while (overflowCourses.length > 0) {
+    const semesterCourses: Course[] = [];
+    let currentHours = 0;
+    
+    while (overflowCourses.length > 0 && currentHours + overflowCourses[0].hours <= maxHours) {
+      const course = overflowCourses.shift()!;
+      semesterCourses.push(course);
+      currentHours += course.hours;
+    }
+    
+    if (semesterCourses.length > 0) {
+      const yearNum = Math.ceil(semesterCounter / 2);
+      const semesterType = semesterCounter % 2 === 1 ? "Fall" : "Spring";
+      
+      redistributed.push({
+        id: `additional-semester-${semesterCounter}`,
+        name: `${semesterType} Year ${yearNum}`,
+        courses: semesterCourses
+      });
+    }
+    
+    semesterCounter++;
+  }
+  
+  return redistributed;
 };
 
 const initialSemesters: Semester[] = convertCpenDataToSemesters();
@@ -153,6 +217,12 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
     const saved = localStorage.getItem('tamuCourses');
     return saved ? JSON.parse(saved) : [];
   });
+
+  // Regenerate semesters when max hours changes
+  useEffect(() => {
+    const newSemesters = convertCpenDataToSemesters(maxHours[0]);
+    setSemesters(newSemesters);
+  }, [maxHours]);
 
   const getTotalHours = (courses: Course[]) => {
     return courses.reduce((sum, course) => sum + course.hours, 0);
@@ -308,31 +378,31 @@ function DegreePlanner({ major, onBack }: DegreePlannerProps) {
             </TabsTrigger>
           </TabsList>
 
-          {/* Semester Selection Dropdown */}
-          <div className="mt-4 flex justify-center">
-            <div className="bg-white rounded-lg shadow-sm border p-4">
-              <Label className="font-[Open_Sans] text-sm font-medium mb-2 block">
-                Select Current Semester:
-              </Label>
-              <Select value={currentSemester} onValueChange={setCurrentSemester}>
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Select semester" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Fall Year 1">Fall Year 1</SelectItem>
-                  <SelectItem value="Spring Year 1">Spring Year 1</SelectItem>
-                  <SelectItem value="Fall Year 2">Fall Year 2</SelectItem>
-                  <SelectItem value="Spring Year 2">Spring Year 2</SelectItem>
-                  <SelectItem value="Fall Year 3">Fall Year 3</SelectItem>
-                  <SelectItem value="Spring Year 3">Spring Year 3</SelectItem>
-                  <SelectItem value="Fall Year 4">Fall Year 4</SelectItem>
-                  <SelectItem value="Spring Year 4">Spring Year 4</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           <TabsContent value="planner" className="space-y-6 mt-6">
+            {/* Semester Selection Dropdown */}
+            <div className="flex justify-center">
+              <div className="bg-white rounded-lg shadow-sm border p-4">
+                <Label className="font-[Open_Sans] text-sm font-medium mb-2 block">
+                  Select Current Semester:
+                </Label>
+                <Select value={currentSemester} onValueChange={setCurrentSemester}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Select semester" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Fall Year 1">Fall Year 1</SelectItem>
+                    <SelectItem value="Spring Year 1">Spring Year 1</SelectItem>
+                    <SelectItem value="Fall Year 2">Fall Year 2</SelectItem>
+                    <SelectItem value="Spring Year 2">Spring Year 2</SelectItem>
+                    <SelectItem value="Fall Year 3">Fall Year 3</SelectItem>
+                    <SelectItem value="Spring Year 3">Spring Year 3</SelectItem>
+                    <SelectItem value="Fall Year 4">Fall Year 4</SelectItem>
+                    <SelectItem value="Spring Year 4">Spring Year 4</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-[Passion_One] text-gray-800">Progress Overview</h2>
